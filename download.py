@@ -42,11 +42,13 @@ if __name__ == "__main__":
 
     df = get_catalog_dataframe()
 
-    URL_PDF_FMT = "https://link.springer.com/content/pdf/10.1007/{}.pdf"
+    URL_PDF_FMT = "https://link.springer.com/content/pdf/{}/{}.pdf"
 
-    df["PDF URL"] = df["DOI URL"].apply(
-        lambda v: URL_PDF_FMT.format(v.strip().replace("http://doi.org/10.1007/", ""))
-    )
+    def make_pdf_url(doi_url: str) -> str:
+        section, book_id = doi_url.split("/")[-2:]
+        return URL_PDF_FMT.format(section, book_id)
+
+    df["PDF URL"] = df["DOI URL"].apply(make_pdf_url)
 
     destination = Path("books")
     destination.mkdir(mode=0o755, exist_ok=True)
