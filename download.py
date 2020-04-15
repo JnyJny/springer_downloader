@@ -53,13 +53,21 @@ if __name__ == "__main__":
     destination = Path("books")
     destination.mkdir(mode=0o755, exist_ok=True)
 
-    cols = ["Book Title", "PDF URL"]
+    cols = ["Book Title", "Edition", "PDF URL"]
 
     failed = {}
 
-    for title, url in tqdm.tqdm(df[cols].values):
+    tt = str.maketrans({"/": "_", " ": "_", ":": "", ".": ""})
 
-        book = (destination / title.replace("/", "_")).with_suffix(".pdf")
+    for title, edition, url in tqdm.tqdm(df[cols].values):
+
+        filename = f"{title}-{edition}".translate(tt)
+
+        book = (destination / filename).with_suffix(".pdf")
+
+        print(book)
+        continue
+
         if book.exists():
             continue
 
