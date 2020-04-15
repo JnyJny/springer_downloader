@@ -65,9 +65,6 @@ if __name__ == "__main__":
 
         book = (destination / filename).with_suffix(".pdf")
 
-        print(book)
-        continue
-
         if book.exists():
             continue
 
