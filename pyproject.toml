@@ -1,9 +1,11 @@
 [tool.poetry]
 name = "springer"
-version = "0.6.0"
+version = "0.6.1"
 description = "Bulk Springer Textbook Downloader"
 authors = ["JnyJny <erik.oshaughnessy@gmail.com>"]
 license = "Apache-2.0"
+readme="README.md"
+repository="http://github.com/JnyJny/springer_downloader"
 
 [tool.poetry.scripts]
 springer="springer.__main__:cli"
