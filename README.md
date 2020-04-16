@@ -1,12 +1,40 @@
-# Springer Downloader
+# `springer`
 
-Springer Nature is offering free access to a range of essential textbooks:
+Springer Textbook Bulk Download Tool
+    
 
-https://www.springernature.com/gp/librarians/news-events/all-news-articles/industry-news-initiatives/free-access-to-textbooks-for-institutions-affected-by-coronaviru/17855960
+**Usage**:
 
-This script pulls the Excel catalog of available books as a Pandas DataFrame,
-builds a list of URLs for the PDF versions of each title and downloads the
-files into a 'books' directory in the current working directory. If a file
-with the book's title already exists, the title is not downloaded.
+```console
+$ springer [OPTIONS] COMMAND [ARGS]...
+```
 
-It's a quick and dirty script, but seems to get the job done.
+**Options**:
+
+* `-n, --dryrun`: List titles and filenames but do not download any textbooks.  [default: False]
+* `--install-completion`: Install completion for the current shell.
+* `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `download`
+
+## `springer download`
+
+    
+
+**Usage**:
+
+```console
+$ springer download [OPTIONS]
+```
+
+**Options**:
+
+* `-d, --dest-path PATH`: Destination directory for downloaded files.  [default: /Users/ejo/springer]
+* `-u, --url TEXT`: URL for Excel formatted catalog
+* `-R, --refresh`: Refresh the cached Springer catalog
+* `-f, --format [pdf|epub]`: [default: pdf]
+* `-W, --over-write`: Over write downloaded files.  [default: False]
+* `--help`: Show this message and exit.
