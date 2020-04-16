@@ -1,5 +1,5 @@
 
-TARGET=springer_downloader
+TARGET=springer
 
 VERSION_FILE= $(TARGET)/__version__.py
 
