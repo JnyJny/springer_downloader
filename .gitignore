@@ -1,3 +1,4 @@
 *.pdf
+*.epub
 dist/*
 *.egg-info/*
