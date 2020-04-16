@@ -25,6 +25,9 @@ all:
 	@echo
 	@echo "clean  - cleans up report files and/or directories"
 
+README.md:
+	typer $(TARGET).__main__ utils docs --name $(TARGET) --output $@
+
 MAJOR:
 	@poetry version major
 
