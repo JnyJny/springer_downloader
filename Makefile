@@ -71,4 +71,4 @@ minor_release: minor push publish
 release: patch_release
 
 clean:
-	@/bin/rm -rf output.png
+	@/bin/rm -rf *.pdf *.epub
