@@ -73,7 +73,7 @@ class Textbook:
 
     def save(
         self, dest: Path, overwrite: bool = False, content_url: str = None
-    ) -> bool:
+    ) -> None:
         """
         """
 
@@ -89,13 +89,11 @@ class Textbook:
         result = requests.get(url, stream=True)
 
         if not result:
-            return result.ok
+            return
 
         with path.open("wb") as fp:
             for chunk in result.iter_content(chunk_size=8192):
                 fp.write(chunk)
-
-        return True
 
 
 class Catalog:
@@ -194,7 +192,7 @@ class Catalog:
         dryrun: bool,
         filter: dict = None,
     ) -> None:
-        """Downloads all the books found in the Springer free textbook catalog.
+        """Downloads all the books found in the Springer textbook catalog.
 
         :param dest: Path
         :param file_format: springer.file_format.FileFormat
@@ -213,6 +211,8 @@ class Catalog:
                 print(f" Path> {dest / textbook.path}")
             return
 
+        dest.mkdir(mode=0o755, exist_ok=True)
+
         def item_title(value):
             if not value:
                 return f"Downloaded to {dest}"
@@ -230,7 +230,4 @@ class Catalog:
             width=10,
         ) as workitems:
             for textbook in workitems:
-                if dryrun:
-                    sleep(0.01)
-                    continue
                 textbook.save(dest, overwrite=overwrite)
