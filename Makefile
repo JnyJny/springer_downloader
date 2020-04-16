@@ -3,7 +3,7 @@ TARGET=springer
 
 VERSION_FILE= $(TARGET)/__version__.py
 
-.PHONY: $(VERSION_FILE) tag bump push update_pyproject
+.PHONY: $(VERSION_FILE) tag bump push update_pyproject README.md
 
 all:
 	@echo $(TARGET) release automation
