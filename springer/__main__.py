@@ -125,10 +125,13 @@ def download(
 
     $ springer download --dest-path pdfs --over-write
 
-    Download all books in PDF from the Germal all disciplines catalog:
+    Download all books in PDF from the German all disciplines catalog:
     
     $ springer -L de -C all download --dest-path german/all/pdfs
-    
+
+    Download all books from all catelogs in epub format:
+
+    $ springer download --all --dest-path books --format epub
     """
 
     logger.configure(
@@ -232,9 +235,6 @@ def clean(
 @cli.command()
 def catalogs(ctx: typer.Context):
     """List available catalogs.
-
-    Lists all available collections in different languages.
-
     """
 
     for language in Language:
