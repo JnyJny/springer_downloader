@@ -18,11 +18,10 @@ _SPRINGER_CATALOG_URL = "https://resource-cms.springernature.com/springer-cms/re
 @dataclass
 class Textbook:
     title: str
-    edition: str
-    suffix: str
     section: str
     book_id: str
     isbn: str
+    suffix: str
 
     @property
     def ttable(self) -> dict:
@@ -57,7 +56,7 @@ class Textbook:
         except AttributeError:
             pass
 
-        name = f"{self.title}-{self.edition}-{self.isbn}"
+        name = f"{self.title}-EISBN-{self.isbn}"
 
         self._path = Path(name.translate(self.ttable)).with_suffix(f".{self.suffix}")
 
@@ -106,6 +105,11 @@ class Catalog:
     def __init__(
         self, url: str = None, application_name: str = "springer", refresh: bool = False
     ):
+        """
+        :param url: str
+        :param application_name: str
+        :param refresh: bool
+        """
         self.url = url or self._URL
         self.app_name = application_name
         self.refresh = refresh
@@ -127,7 +131,10 @@ class Catalog:
     @property
     def cache_file(self) -> Path:
         """pathlib.Path identifying where the cached catalog is
-        located in the filesystem.
+        located in the filesystem. If the cached catalog file
+        does not exist or catalog.refresh is True, the catalog
+        Excel file will be read into a pandas.DataFrame and
+        writen to the cache file path in CSV format. 
         """
         if not self.refresh:
             try:
@@ -138,13 +145,20 @@ class Catalog:
         self._cache_file = self.app_dir / "catalog.csv"
 
         if not self._cache_file.exists() or self.refresh:
-            df = pd.read_excel(self.url).dropna(axis=1)
-            df["Section"] = df["DOI URL"].apply(lambda v: v.split("/")[-2])
-            df["Book ID"] = df["DOI URL"].apply(lambda v: v.split("/")[-1])
-            df.to_csv(self._cache_file)
+            self.fetch_catalog()
             self.refresh = False
 
         return self._cache_file
+
+    def fetch_catalog(self) -> None:
+        """Reads the Excel file at `self.url` and writes it to the
+        `cache_file` in CSV format.
+        """
+
+        df = pd.read_excel(self.url).dropna(axis=1)
+        df["Section"] = df["DOI URL"].apply(lambda v: v.split("/")[-2])
+        df["Book ID"] = df["DOI URL"].apply(lambda v: v.split("/")[-1])
+        df.to_csv(self._cache_file)
 
     @property
     def dataframe(self):
@@ -160,13 +174,17 @@ class Catalog:
 
         return self._dataframe
 
-    def textbooks(self, file_format: FileFormat) -> list:
+    def textbooks(self, file_format: FileFormat) -> Textbook:
+        """A generator function that returns a springer.catalog.Textbook
+        for each entry in the catalog configured for the specified
+        `file_format`.
 
-        columns = ["Book Title", "Edition", "Section", "Book ID", "Electronic ISBN"]
-        books = []
-        for title, edition, section, book_id, isbn in self.dataframe[columns].values:
-            books.append(Textbook(title, edition, file_format, section, book_id, isbn))
-        return books
+        :param file_format: springer.file_format.FileFormat
+        :return: list
+        """
+        columns = ["Book Title", "Section", "Book ID", "Electronic ISBN"]
+        for values in self.dataframe[columns].values:
+            yield Textbook(*values, file_format)
 
     def download(
         self,
@@ -176,22 +194,36 @@ class Catalog:
         dryrun: bool,
         filter: dict = None,
     ) -> None:
-        """
+        """Downloads all the books found in the Springer free textbook catalog.
+
+        :param dest: Path
+        :param file_format: springer.file_format.FileFormat
+        :param overwrite: bool
+        :param dryrun: bool:
+        :param filter: dict <NotImplemented>
+        :return: None
         """
 
         dest = dest.resolve()
 
+        if dryrun:
+            print("Destination: {dest}")
+            for textbook in self.textbooks(file_format):
+                print(f"Title: {textbook.title}")
+                print(f" Path> {dest / textbook.path}")
+            return
+
         def item_title(value):
             if not value:
-                return f"Downloads Complete to {dest}"
+                return f"Downloaded to {dest}"
             return value.title[:40]
-
-        label = f'{"DRYRUN-" if dryrun else ""}{file_format.upper()}'
 
         with typer.progressbar(
             self.textbooks(file_format),
             item_show_func=item_title,
-            label=label,
+            length=self.dataframe.count().max(),
+            fill_char="📕",
+            label=f"{file_format.upper():4s}",
             show_pos=True,
             show_percent=False,
             show_eta=True,
