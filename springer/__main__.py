@@ -14,11 +14,18 @@ cli = typer.Typer()
 @cli.callback()
 def main(
     ctx: typer.Context,
-    verbose: bool = typer.Option(False, "--verbose/--quiet", "-v/-q"),
+    dryrun: bool = typer.Option(
+        False,
+        "--dryrun",
+        "-n",
+        is_flag=True,
+        show_default=True,
+        help="List titles and filenames but do not download any textbooks.",
+    ),
 ):
     """Springer Textbook Bulk Download Tool
     """
-    ctx.obj = verbose
+    ctx.obj = dryrun
 
 
 @cli.command()
@@ -52,18 +59,10 @@ def download(
         show_default=True,
         help="Over write downloaded files.",
     ),
-    dryrun: bool = typer.Option(
-        False,
-        "--dry-run",
-        "-n",
-        is_flag=True,
-        show_default=True,
-        help="Display URLs and files that would be downloaded.",
-    ),
 ):
     """
     """
 
     catalog = Catalog(catalog_url, refresh=refresh)
 
-    catalog.download(dest_path, file_format, overwrite=overwrite, dryrun=dryrun)
+    catalog.download(dest_path, file_format, overwrite=overwrite, dryrun=ctx.obj)
