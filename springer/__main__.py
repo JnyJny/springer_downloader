@@ -39,13 +39,39 @@ def main(
     Author not affiliated with Springer and this tool is not authorized
     or supported by Springer. Thank you to Springer for making these
     high quality textbooks available at no cost. 
+
+    From `https://www.springernature.com/gp/librarians/news-events/all-news-articles/industry-news-initiatives/free-access-to-textbooks-for-institutions-affected-by-coronaviru/17855960`:
+
+    "With the Coronavirus outbreak having an unpretextbookscedented
+    impact on education, Springer Nature is launching a global program
+    to support learning and teaching at higher education institutions
+    worldwide. Remote access to educational resources has become
+    essential. We want to support lecturers, teachers and students
+    during this challenging period and hope that this initiative will go
+    some way to help. 
+
+    Institutions will be able to access more than 500 key textbooks
+    across Springer Nature’s eBook subject collections for free. In
+    addition, we are making a number of German-language Springer medical
+    training books on emergency nursing freely accessible.  These books
+    will be available via SpringerLink until at least the end of July."
+
+    This tool automates the tasks of downloading the Excel-formatted
+    catalogs and downloading the files described in the catalog.
+
     """
+
     # EJO The callback function is called before any of the command functions
     #     are invoked. Since all the subcommands work with an instantiation of
     #     springer.catalog.Catalog, we create one in the callback and attach
     #     it to the typer.Context object using the attribute 'obj'.
 
-    ctx.obj = Catalog(language, category)
+    try:
+        ctx.obj = Catalog(language, category)
+    except KeyError as error:
+        value = error.args[0]
+        typer.secho(f"Failed to locate a catalog for '{value}'", fg="red")
+        raise typer.Exit(-1)
 
 
 @cli.command()
@@ -58,7 +84,18 @@ def list(
         False, "--show-path", "-p", help="Show generated filename for each book.",
     ),
 ):
-    """List textbooks in the catalog.
+    """List titles of textbooks in the catalog.
+
+    Examples
+    
+    List titles available in the default catalog (en-all):
+
+    $ springer list
+
+    List titles available in the German language, all disciplines catalog:
+
+    $ springer --language de --category all list
+
     """
 
     ctx.obj.list(file_format, show_path=show_path)
@@ -100,11 +137,18 @@ def download(
     will skip over files that have been previously downloaded and pick up
     where it left off. 
 
-    If the --all option is specified, the --dest=path option specifies the
+    If the --all option is specified, the --dest-path option specifies the
     root directory where files will be stored. Each catalog will save 
     it's textbooks to:
     
     dest_path/language/category/book_file_name.fmt
+
+    Files that fail to download will be logged to a file named:
+
+    dest_path/DOWNLOAD_ERRORS.txt
+    
+    The log entries will have the date and time of the attempt,
+    the HTTP status code and the URL that was attempted.
 
 
     EXAMPLES

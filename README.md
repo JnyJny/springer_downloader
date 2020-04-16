@@ -8,6 +8,25 @@ Author not affiliated with Springer and this tool is not authorized
 or supported by Springer. Thank you to Springer for making these
 high quality textbooks available at no cost. 
 
+From `https://www.springernature.com/gp/librarians/news-events/all-news-articles/industry-news-initiatives/free-access-to-textbooks-for-institutions-affected-by-coronaviru/17855960`:
+
+"With the Coronavirus outbreak having an unpretextbookscedented
+impact on education, Springer Nature is launching a global program
+to support learning and teaching at higher education institutions
+worldwide. Remote access to educational resources has become
+essential. We want to support lecturers, teachers and students
+during this challenging period and hope that this initiative will go
+some way to help. 
+
+Institutions will be able to access more than 500 key textbooks
+across Springer Nature’s eBook subject collections for free. In
+addition, we are making a number of German-language Springer medical
+training books on emergency nursing freely accessible.  These books
+will be available via SpringerLink until at least the end of July."
+
+This tool automates the tasks of downloading the Excel-formatted
+catalogs and downloading the files described in the catalog.
+
 **Usage**:
 
 ```console
@@ -27,7 +46,7 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 * `catalogs`: List available catalogs.
 * `clean`: Removes the cached catalog.
 * `download`: Download textbooks from Springer.
-* `list`: List textbooks in the catalog.
+* `list`: List titles of textbooks in the catalog.
 * `refresh`: Refresh the cached catalog of Springer...
 
 ## `springer catalogs`
@@ -75,11 +94,18 @@ If a download is interrupted, you can re-start the download and it
 will skip over files that have been previously downloaded and pick up
 where it left off. 
 
-If the --all option is specified, the --dest=path option specifies the
+If the --all option is specified, the --dest-path option specifies the
 root directory where files will be stored. Each catalog will save 
 it's textbooks to:
 
 dest_path/language/category/book_file_name.fmt
+
+Files that fail to download will be logged to a file named:
+
+dest_path/DOWNLOAD_ERRORS.txt
+
+The log entries will have the date and time of the attempt,
+the HTTP status code and the URL that was attempted.
 
 
 EXAMPLES
@@ -124,8 +150,17 @@ $ springer download [OPTIONS]
 
 ## `springer list`
 
-List textbooks in the catalog.
-    
+List titles of textbooks in the catalog.
+
+Examples
+
+List titles available in the default catalog (en-all):
+
+$ springer list
+
+List titles available in the German language, all disciplines catalog:
+
+$ springer --language de --category all list
 
 **Usage**:
 
