@@ -11,7 +11,8 @@ from pathlib import Path
 
 from .file_format import FileFormat
 
-_SPRINGER_CONTENT_URL = "https://link.springer.com/content"
+_SPRINGER_PDF_URL = "https://link.springer.com/content"
+_SPRINGER_EPUB_URL = "https://link.springer.com/download"
 _SPRINGER_CATALOG_URL = "https://resource-cms.springernature.com/springer-cms/rest/v1/content/17858272/data/v4"
 
 
@@ -71,20 +72,27 @@ class Textbook:
         self._uid = f"{self.section}/{self.book_id}"
         return self._uid
 
-    def save(
-        self, dest: Path, overwrite: bool = False, content_url: str = None
-    ) -> None:
-        """
-        """
+    @property
+    def content_url(self):
 
-        content_url = content_url or _SPRINGER_CONTENT_URL
+        if self.suffix.lower() == "pdf":
+            return _SPRINGER_PDF_URL
+
+        if self.suffix.lower() == "epub":
+            return _SPRINGER_EPUB_URL
+
+        raise ValueError("Unknown suffix", self.suffix)
+
+    def save(self, dest: Path, overwrite: bool = False) -> None:
+        """
+        """
 
         path = dest / self.path
 
         if not overwrite and path.exists() and path.is_file():
             return True
 
-        url = f"{content_url}/{self.suffix}/{self.uid}.{self.suffix}"
+        url = f"{self.content_url}/{self.suffix}/{self.uid}.{self.suffix}"
 
         result = requests.get(url, stream=True)
 
