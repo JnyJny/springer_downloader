@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "springer"
-version = "0.5.0"
+version = "0.6.0"
 description = "Bulk Springer Textbook Downloader"
 authors = ["JnyJny <erik.oshaughnessy@gmail.com>"]
 license = "Apache-2.0"
