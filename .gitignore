@@ -2,3 +2,4 @@
 *.epub
 dist/*
 *.egg-info/*
+DOWNLOAD_ERRORS.txt
