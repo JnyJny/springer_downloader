@@ -2,7 +2,7 @@
 
 Springer Textbook Bulk Download Tool
 
-NOTICE:
+**NOTICE**:
 
 Author not affiliated with Springer and this tool is not authorized
 or supported by Springer. Thank you to Springer for making these
@@ -53,7 +53,15 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 ## `springer catalogs`
 
 List available catalogs.
-    
+
+Prints an entry for each known catalog:
+
+
+- Catalog URL
+- Language
+- Category
+- Cache file path
+- Number of books in the catalog.
 
 **Usage**:
 
@@ -68,7 +76,16 @@ $ springer catalogs [OPTIONS]
 ## `springer clean`
 
 Removes the cached catalog.
-    
+
+Examples
+
+Remove the English language, all disciplines cached catalog:
+
+`$ springer clean -F`
+
+Remove the German language emergency nursing cached catalog:
+
+`$ springer -L de -C med clean -F`
 
 **Usage**:
 
@@ -113,27 +130,27 @@ EXAMPLES
 
 Download all books in PDF format to the current directory:
 
-$ springer download
+`$ springer download`
 
 Download all books in EPUB format to the current directory:
 
-$ springer download --format epub
+`$ springer download --format epub`
 
 Download all books in PDF format to a directory `pdfs`:
 
-$ springer download --dest-path pdfs
+`$ springer download --dest-path pdfs`
 
 Download books in PDF format to `pdfs` with overwriting:
 
-$ springer download --dest-path pdfs --over-write
+`$ springer download --dest-path pdfs --over-write`
 
 Download all books in PDF from the German all disciplines catalog:
 
-$ springer -L de -C all download --dest-path german/all/pdfs
+`$ springer -L de -C all download --dest-path german/all/pdfs`
 
 Download all books from all catelogs in epub format:
 
-$ springer download --all --dest-path books --format epub
+`$ springer download --all --dest-path books --format epub`
 
 **Usage**:
 
@@ -157,11 +174,11 @@ Examples
 
 List titles available in the default catalog (en-all):
 
-$ springer list
+`$ springer list`
 
 List titles available in the German language, all disciplines catalog:
 
-$ springer --language de --category all list
+`$ springer --language de --category all list`
 
 **Usage**:
 
@@ -185,19 +202,19 @@ Examples
 
 Update English language catalog:
 
-$ springer --language en refresh
+`$ springer --language en refresh`
 
 Update German language catalog whose category is 'all':
 
-$ springer --language de --category all refresh
+`$ springer --language de --category all refresh`
 
 Update German language catalog whose category is 'med' with a new URL:
 
-$ springer -L de -C med refresh --url https://example.com/api/endpoint/something/v11
+`$ springer -L de -C med refresh --url https://example.com/api/endpoint/something/v11`
 
 Update all catalogs:
 
-$ springer refresh --all
+`$ springer refresh --all`
 
 **Usage**:
 
