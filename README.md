@@ -28,6 +28,16 @@ high quality textbooks available at no cost.
 This tool automates the tasks of downloading the Excel-formatted
 catalogs and downloading the files described in the catalog.
 
+This utility can be installed using `pip`:
+
+`$ python3 -m pip install springer`
+
+Or the latest from master:
+
+`$ python3 -m pip install git+https://github.com/JnyJny/springer_downloader`
+
+The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
+
 **Usage**:
 
 ```console
