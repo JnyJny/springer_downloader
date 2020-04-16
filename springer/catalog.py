@@ -1,124 +1,33 @@
-"""
+"""the Springer Free Textbook Catalog
 """
 
 import pandas as pd
-import requests
 import typer
 
-from dataclasses import dataclass
 from time import sleep
 from pathlib import Path
 
 from .file_format import FileFormat
+from .textbook import Textbook
 
-_SPRINGER_PDF_URL = "https://link.springer.com/content"
-_SPRINGER_EPUB_URL = "https://link.springer.com/download"
-_SPRINGER_CATALOG_URL = "https://resource-cms.springernature.com/springer-cms/rest/v1/content/17858272/data/v4"
-
-
-@dataclass
-class Textbook:
-    title: str
-    section: str
-    book_id: str
-    isbn: str
-    suffix: str
-
-    @property
-    def ttable(self) -> dict:
-        try:
-            return self._ttable
-        except AttributeError:
-            pass
-        self._ttable = str.maketrans(
-            {
-                "/": "_",
-                " ": "_",
-                ":": "",
-                ".": "",
-                ",": "",
-                '"': "",
-                "'": "",
-                "(": "",
-                ")": "",
-                "{": "",
-                "}": "",
-                "*": "",
-                "?": "",
-                "®": "",
-            }
-        )
-        return self._ttable
-
-    @property
-    def path(self) -> Path:
-        try:
-            return self._path
-        except AttributeError:
-            pass
-
-        name = f"{self.title}-EISBN-{self.isbn}"
-
-        self._path = Path(name.translate(self.ttable)).with_suffix(f".{self.suffix}")
-
-        return self._path
-
-    @property
-    def uid(self):
-        try:
-            return self._uid
-        except AttributeError:
-            pass
-        self._uid = f"{self.section}/{self.book_id}"
-        return self._uid
-
-    @property
-    def content_url(self):
-
-        if self.suffix.lower() == "pdf":
-            return _SPRINGER_PDF_URL
-
-        if self.suffix.lower() == "epub":
-            return _SPRINGER_EPUB_URL
-
-        raise ValueError("Unknown suffix", self.suffix)
-
-    def save(self, dest: Path, overwrite: bool = False) -> None:
-        """
-        """
-
-        path = dest / self.path
-
-        if not overwrite and path.exists() and path.is_file():
-            return True
-
-        url = f"{self.content_url}/{self.suffix}/{self.uid}.{self.suffix}"
-
-        result = requests.get(url, stream=True)
-
-        if not result:
-            return
-
-        with path.open("wb") as fp:
-            for chunk in result.iter_content(chunk_size=8192):
-                fp.write(chunk)
+from . import _urls
 
 
 class Catalog:
+    """A wrapper around an Excel file provided by Springer, listing information
+    about the textbooks offered free of charge.
+    """
 
-    _URL = _SPRINGER_CATALOG_URL
+    _URL = _urls["catalog"]
 
-    def __init__(
-        self, url: str = None, application_name: str = "springer", refresh: bool = False
-    ):
+    def __init__(self, url: str = None, refresh: bool = False):
         """
         :param url: str
-        :param application_name: str
         :param refresh: bool
         """
         self.url = url or self._URL
-        self.app_name = application_name
-        self.refresh = refresh
+        if not self.cache_file.exists() or refresh:
+            self.fetch_catalog()
 
     @property
     def app_dir(self) -> Path:
@@ -129,67 +38,79 @@ class Catalog:
         except AttributeError:
             pass
 
-        self._app_dir = Path(typer.get_app_dir(self.app_name))
+        self._app_dir = Path(typer.get_app_dir(__package__))
         self._app_dir.mkdir(mode=0o755, exist_ok=True)
 
         return self._app_dir
 
     @property
     def cache_file(self) -> Path:
-        """pathlib.Path identifying where the cached catalog is
-        located in the filesystem. If the cached catalog file
-        does not exist or catalog.refresh is True, the catalog
-        Excel file will be read into a pandas.DataFrame and
-        writen to the cache file path in CSV format. 
+        """pathlib.Path for the locally cached catalog.
         """
-        if not self.refresh:
-            try:
-                return self._cache_file
-            except AttributeError:
-                pass
+        try:
+            return self._cache_file
+        except AttributeError:
+            pass
 
         self._cache_file = self.app_dir / "catalog.csv"
 
-        if not self._cache_file.exists() or self.refresh:
-            self.fetch_catalog()
-            self.refresh = False
-
         return self._cache_file
-
-    def fetch_catalog(self) -> None:
-        """Reads the Excel file at `self.url` and writes it to the
-        `cache_file` in CSV format.
-        """
-
-        df = pd.read_excel(self.url).dropna(axis=1)
-        df["Section"] = df["DOI URL"].apply(lambda v: v.split("/")[-2])
-        df["Book ID"] = df["DOI URL"].apply(lambda v: v.split("/")[-1])
-        df.to_csv(self._cache_file)
 
     @property
     def dataframe(self):
-        """A pandas.DataFrame populated with the contents of the
-        Springer catalog.
+        """A pandas.DataFrame populated with the contents of the Springer free textbook catalog.
         """
         try:
             return self._dataframe
         except AttributeError:
             pass
 
-        self._dataframe = pd.read_csv(self.cache_file).dropna(axis=1)
+        if not self.cache_file.exists():
+            self.fetch_catalog()
+
+        df = pd.read_csv(self.cache_file).dropna(axis=1)
+
+        columns_to_drop = ["Unnamed: 0"]
+
+        try:
+            df.drop(columns=columns_to_drop, inplace=True)
+        except KeyError:
+            pass
+
+        df["Section"] = df["DOI URL"].apply(lambda v: v.split("/")[-2])
+        df["Book ID"] = df["DOI URL"].apply(lambda v: v.split("/")[-1])
+
+        df.sort_values(by="Book Title", ascending=True, inplace=True)
+
+        self._dataframe = df
 
         return self._dataframe
 
-    def textbooks(self, file_format: FileFormat) -> Textbook:
-        """A generator function that returns a springer.catalog.Textbook
-        for each entry in the catalog configured for the specified
-        `file_format`.
+    def fetch_catalog(self, url: str = None) -> None:
+        """Reads the Excel file at `url` and writes it to the local filesystem.
+
+        The Excel file is written to `cache_file` in CSV format. If
+        `url` is not given, `self.url` is used.
+
+        :param url: str
+        :return: None
+        """
+
+        url = url or self.url
+        pd.read_excel(url).dropna(axis=1).to_csv(self.cache_file)
+
+    def textbooks(self, file_format: FileFormat, filter: dict = None) -> Textbook:
+        """A generator function that returns initialized Textbook objects.
+        
+        For each entry in the catalog configured for the specified
+        `file_format`, a Textbook object initialized from values in
+        self.dataframe is yield'ed to the caller.
 
         :param file_format: springer.file_format.FileFormat
+        :param filter: dict <NotImplemented>
         :return: list
         """
-        columns = ["Book Title", "Section", "Book ID", "Electronic ISBN"]
-        for values in self.dataframe[columns].values:
+        for values in self.dataframe.values:
             yield Textbook(*values, file_format)
 
     def download(
@@ -197,7 +118,7 @@ class Catalog:
         dest: Path,
         file_format: FileFormat,
         overwrite: bool,
-        dryrun: bool,
+        log: bool = True,
         filter: dict = None,
     ) -> None:
         """Downloads all the books found in the Springer textbook catalog.
@@ -211,13 +132,6 @@ class Catalog:
         """
 
         dest = dest.resolve()
-
-        if dryrun:
-            print("Destination: {dest}")
-            for textbook in self.textbooks(file_format):
-                print(f"Title: {textbook.title}")
-                print(f" Path> {dest / textbook.path}")
-            return
 
         dest.mkdir(mode=0o755, exist_ok=True)
 
@@ -239,3 +153,17 @@ class Catalog:
         ) as workitems:
             for textbook in workitems:
                 textbook.save(dest, overwrite=overwrite)
+
+    def list(
+        self, file_format: FileFormat, show_path: bool = False, filter: dict = None,
+    ) -> None:
+        """List available textbooks titles.
+
+        :param filter: dict <NotImplemented>
+        """
+
+        print("Destination: {dest}")
+        for count, textbook in enumerate(self.textbooks(file_format, filter), start=1):
+            print(f"Title #{count:03d}: {textbook.title}")
+            if show_path:
+                print(f" Path #{count:03d}> {textbook.path}")
