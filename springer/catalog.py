@@ -7,7 +7,8 @@ import typer
 from time import sleep
 from pathlib import Path
 
-from .file_format import FileFormat
+from .constants import FileFormat, Language, Category
+
 from .textbook import Textbook
 
 from . import _urls
@@ -18,16 +19,51 @@ class Catalog:
     about the textbooks offered free of charge.
     """
 
-    _URL = _urls["catalog"]
-
-    def __init__(self, url: str = None, refresh: bool = False):
+    def __init__(
+        self,
+        language: Language = None,
+        category: Category = None,
+        refresh: bool = False,
+    ):
         """
         :param url: str
         :param refresh: bool
         """
-        self.url = url or self._URL
+        self.language = language or Language.English
+        self.category = category or Category.AllDisciplines
+
         if not self.cache_file.exists() or refresh:
             self.fetch_catalog()
+
+    def __repr__(self):
+
+        return f"{self.__class__.__name__}(language={self.language}, category={self.category})"
+
+    def __str__(self):
+
+        return (
+            "\n".join(
+                [
+                    f"Catalog: {self.url}",
+                    f"    Language: {self.language}",
+                    f"    Category: {self.category}",
+                    f"  Cache File: {self.cache_file}",
+                    f"  # of Books: {self.dataframe.count().max()}",
+                ]
+            )
+            + "\n"
+        )
+
+    @property
+    def url(self) -> str:
+        try:
+            return self._url
+        except AttributeError:
+            pass
+
+        self._url = _urls["catalogs"][self.language][self.category]
+
+        return self._url
 
     @property
     def app_dir(self) -> Path:
@@ -52,7 +88,7 @@ class Catalog:
         except AttributeError:
             pass
 
-        self._cache_file = self.app_dir / "catalog.csv"
+        self._cache_file = self.app_dir / f"catalog-{self.language}-{self.category}.csv"
 
         return self._cache_file
 
@@ -69,13 +105,6 @@ class Catalog:
             self.fetch_catalog()
 
         df = pd.read_csv(self.cache_file).dropna(axis=1)
-
-        columns_to_drop = ["Unnamed: 0"]
-
-        try:
-            df.drop(columns=columns_to_drop, inplace=True)
-        except KeyError:
-            pass
 
         df["Section"] = df["DOI URL"].apply(lambda v: v.split("/")[-2])
         df["Book ID"] = df["DOI URL"].apply(lambda v: v.split("/")[-1])
@@ -97,6 +126,7 @@ class Catalog:
         """
 
         url = url or self.url
+
         pd.read_excel(url).dropna(axis=1).to_csv(self.cache_file)
 
     def textbooks(self, file_format: FileFormat, filter: dict = None) -> Textbook:
@@ -106,11 +136,12 @@ class Catalog:
         `file_format`, a Textbook object initialized from values in
         self.dataframe is yield'ed to the caller.
 
-        :param file_format: springer.file_format.FileFormat
+        :param file_format: springer.constants.FileFormat
         :param filter: dict <NotImplemented>
         :return: list
         """
-        for values in self.dataframe.values:
+
+        for values in self.dataframe[Textbook._dataframe_columns].values:
             yield Textbook(*values, file_format)
 
     def download(
@@ -124,7 +155,7 @@ class Catalog:
         """Downloads all the books found in the Springer textbook catalog.
 
         :param dest: Path
-        :param file_format: springer.file_format.FileFormat
+        :param file_format: springer.constants.FileFormat
         :param overwrite: bool
         :param dryrun: bool:
         :param filter: dict <NotImplemented>
@@ -133,7 +164,7 @@ class Catalog:
 
         dest = dest.resolve()
 
-        dest.mkdir(mode=0o755, exist_ok=True)
+        dest.mkdir(mode=0o755, exist_ok=True, parents=True)
 
         def item_title(value):
             if not value:
@@ -145,7 +176,7 @@ class Catalog:
             item_show_func=item_title,
             length=self.dataframe.count().max(),
             fill_char="📕",
-            label=f"{file_format.upper():4s}",
+            label=f"{file_format.upper():4s}:{self.language.value.upper()}",
             show_pos=True,
             show_percent=False,
             show_eta=True,
@@ -159,10 +190,11 @@ class Catalog:
     ) -> None:
         """List available textbooks titles.
 
+        :param file_format: springer.constant.FileFormat
+        :param show_path: bool
         :param filter: dict <NotImplemented>
         """
 
-        print("Destination: {dest}")
         for count, textbook in enumerate(self.textbooks(file_format, filter), start=1):
             print(f"Title #{count:03d}: {textbook.title}")
             if show_path:

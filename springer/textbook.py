@@ -6,11 +6,12 @@ import requests
 
 
 from dataclasses import dataclass
+from loguru import logger
 from pathlib import Path
 
-from .file_format import FileFormat
+from .constants import FileFormat
 
-from . import _content_urls
+from . import _urls
 
 
 @dataclass
@@ -22,15 +23,10 @@ class Textbook:
     title: str
     author: str
     edition: str
-    product_type: str
     copyright_year: str
     copyright_holder: str
     isbn: str
     eisbn: str
-    language: str
-    language_collection: str
-    ebook_package: str
-    english_package_name: str
     doi_url: str
     openurl: str
     subject_classification: str
@@ -39,6 +35,23 @@ class Textbook:
     section: str
     book_id: str
     suffix: str
+
+    _dataframe_columns = [
+        "Book Title",
+        "Author",
+        "Edition",
+        "Copyright Year",
+        "Copyright Holder",
+        "Print ISBN",
+        "Electronic ISBN",
+        "DOI URL",
+        "OpenURL",
+        "Subject Classification",
+        "Publisher",
+        "Imprint",
+        "Section",
+        "Book ID",
+    ]
 
     @property
     def ttable(self) -> dict:
@@ -102,7 +115,7 @@ class Textbook:
         """Base URL to download content with the format indicated by suffix.
         """
         try:
-            return _content_urls[self.suffix]
+            return _urls["content"][self.suffix]
         except KeyError:
             raise ValueError("Unknown Textbook Suffix:", self.suffix) from None
 
@@ -124,11 +137,11 @@ class Textbook:
         if not overwrite and path.exists() and path.is_file():
             return True
 
-        url = f"{self.content_url}/{self.suffix}/{self.uid}.{self.suffix}"
-
+        url = f"{self.content_url}/{self.uid}.{self.suffix}"
         result = requests.get(url, stream=True)
 
         if not result:
+            logger.debug(f"{result.status_code} {url}")
             return
 
         with path.open("wb") as fp:

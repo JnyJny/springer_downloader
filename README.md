@@ -16,17 +16,35 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
+* `-L, --lang [en|de]`: Choose catalog language  [default: en]
+* `-C, --category [all|med]`: Choose a catalog catagory.  [default: all]
 * `--install-completion`: Install completion for the current shell.
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
 **Commands**:
 
+* `catalogs`: List available catalogs.
 * `clean`: Removes the cached catalog.
 * `download`: Download textbooks from Springer.
 * `list`: List textbooks in the catalog.
 * `refresh`: Refresh the cached catalog of Springer...
-* `urls`: List catalog and content URLS.
+
+## `springer catalogs`
+
+List available catalogs.
+
+Lists all available collections in different languages.
+
+**Usage**:
+
+```console
+$ springer catalogs [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
 
 ## `springer clean`
 
@@ -42,6 +60,7 @@ $ springer clean [OPTIONS]
 **Options**:
 
 * `-F, --force`
+* `--all`
 * `--help`: Show this message and exit.
 
 ## `springer download`
@@ -57,23 +76,34 @@ If a download is interrupted, you can re-start the download and it
 will skip over files that have been previously downloaded and pick up
 where it left off. 
 
+If the --all option is specified, the --dest=path option specifies the
+root directory where files will be stored. Each catalog will save 
+it's textbooks to:
+
+dest_path/language/category/book_file_name.fmt
+
+
 EXAMPLES
 
-Download all books in PDF format to the current directory.
+Download all books in PDF format to the current directory:
 
 $ springer download
 
-Download all books in EPUB format to the current directory.
+Download all books in EPUB format to the current directory:
 
 $ springer download --format epub
 
-Download all books in PDF format to a directory `pdfs`.
+Download all books in PDF format to a directory `pdfs`:
 
 $ springer download --dest-path pdfs
 
-Download books in PDF format to `pdfs` with overwriting.
+Download books in PDF format to `pdfs` with overwriting:
 
 $ springer download --dest-path pdfs --over-write
+
+Download all books in PDF from the Germal all disciplines catalog:
+
+$ springer -L de -C all download --dest-path german/all/pdfs
 
 **Usage**:
 
@@ -86,6 +116,7 @@ $ springer download [OPTIONS]
 * `-d, --dest-path PATH`: Destination directory for downloaded files.  [default: /Users/ejo/local/springer]
 * `-f, --format [pdf|epub]`: [default: pdf]
 * `-W, --over-write`: Over write downloaded files.  [default: False]
+* `--all`: Downloads books from all catalogs.
 * `--help`: Show this message and exit.
 
 ## `springer list`
@@ -108,7 +139,26 @@ $ springer list [OPTIONS]
 ## `springer refresh`
 
 Refresh the cached catalog of Springer textbooks.
-    
+
+If --all is specified, the --url option is ignored.
+
+Examples
+
+Update English language catalog:
+
+$ springer --language en refresh
+
+Update German language catalog whose category is 'all':
+
+$ springer --language de --category all refresh
+
+Update German language catalog whose category is 'med' with a new URL:
+
+$ springer -L de -C med refresh --url https://example.com/api/endpoint/something/v11
+
+Update all catalogs:
+
+$ springer refresh --all
 
 **Usage**:
 
@@ -119,19 +169,5 @@ $ springer refresh [OPTIONS]
 **Options**:
 
 * `-u, --url TEXT`: URL for Excel-formatted catalog
-* `--help`: Show this message and exit.
-
-## `springer urls`
-
-List catalog and content URLS.
-    
-
-**Usage**:
-
-```console
-$ springer urls [OPTIONS]
-```
-
-**Options**:
-
+* `--all`
 * `--help`: Show this message and exit.

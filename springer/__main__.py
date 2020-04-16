@@ -3,16 +3,35 @@
 
 import typer
 
+from loguru import logger
 from pathlib import Path
 
-from .file_format import FileFormat
+from .constants import FileFormat, Language, Category
 from .catalog import Catalog
 
 cli = typer.Typer()
 
 
 @cli.callback()
-def main(ctx: typer.Context):
+def main(
+    ctx: typer.Context,
+    language: Language = typer.Option(
+        Language.English,
+        "--lang",
+        "-L",
+        show_choices=True,
+        show_default=True,
+        help="Choose catalog language",
+    ),
+    category: Category = typer.Option(
+        Category.AllDisciplines,
+        "--category",
+        "-C",
+        show_default=True,
+        show_choices=True,
+        help="Choose a catalog catagory.",
+    ),
+):
     """Springer Textbook Bulk Download Tool
     
     NOTICE:
@@ -26,7 +45,7 @@ def main(ctx: typer.Context):
     #     springer.catalog.Catalog, we create one in the callback and attach
     #     it to the typer.Context object using the attribute 'obj'.
 
-    ctx.obj = Catalog()
+    ctx.obj = Catalog(language, category)
 
 
 @cli.command()
@@ -66,6 +85,9 @@ def download(
         show_default=True,
         help="Over write downloaded files.",
     ),
+    all_catalogs: bool = typer.Option(
+        False, "--all", is_flag=True, help="Downloads books from all catalogs."
+    ),
 ):
     """Download textbooks from Springer.
 
@@ -78,28 +100,61 @@ def download(
     will skip over files that have been previously downloaded and pick up
     where it left off. 
 
+    If the --all option is specified, the --dest=path option specifies the
+    root directory where files will be stored. Each catalog will save 
+    it's textbooks to:
+    
+    dest_path/language/category/book_file_name.fmt
+
+
     EXAMPLES
 
-    Download all books in PDF format to the current directory.
+    Download all books in PDF format to the current directory:
     
     $ springer download
     
-    Download all books in EPUB format to the current directory.
+    Download all books in EPUB format to the current directory:
 
     $ springer download --format epub
 
-    Download all books in PDF format to a directory `pdfs`.
+    Download all books in PDF format to a directory `pdfs`:
 
     $ springer download --dest-path pdfs
 
-    Download books in PDF format to `pdfs` with overwriting.
+    Download books in PDF format to `pdfs` with overwriting:
 
     $ springer download --dest-path pdfs --over-write
+
+    Download all books in PDF from the Germal all disciplines catalog:
     
+    $ springer -L de -C all download --dest-path german/all/pdfs
     
     """
 
-    ctx.obj.download(dest_path, file_format, overwrite=overwrite)
+    logger.configure(
+        **{
+            "handlers": [
+                {
+                    "sink": dest_path / "DOWNLOAD_ERRORS.txt",
+                    "format": "{time:YYYY-MM-DD HH:mm} | <red>{message}</>",
+                    "colorize": True,
+                },
+            ]
+        }
+    )
+
+    if not all_catalogs:
+        ctx.obj.download(dest_path, file_format, overwrite=overwrite)
+        return
+
+    for language in Language:
+        for category in Category:
+            try:
+                catalog = Catalog(language, category)
+            except KeyError:
+                continue
+            dest = dest_path / language.value / category.value
+            catalog.download(dest, file_format, overwrite=overwrite)
 
 
 @cli.command()
@@ -108,16 +163,52 @@ def refresh(
     catalog_url: str = typer.Option(
         None, "--url", "-u", help="URL for Excel-formatted catalog"
     ),
+    all_catalogs: bool = typer.Option(False, "--all", is_flag=True),
 ):
     """Refresh the cached catalog of Springer textbooks.
+
+    If --all is specified, the --url option is ignored.
+
+    Examples
+
+    Update English language catalog:
+
+    $ springer --language en refresh
+
+    Update German language catalog whose category is 'all':
+
+    $ springer --language de --category all refresh
+
+    Update German language catalog whose category is 'med' with a new URL:
+
+    $ springer -L de -C med refresh --url https://example.com/api/endpoint/something/v11
+
+    Update all catalogs:
+
+    $ springer refresh --all
+
     """
 
-    ctx.obj.fetch_catalog(catalog_url)
+    if not all_catalogs:
+        ctx.obj.fetch_catalog(catalog_url)
+        return
+
+    for language in Language:
+        for category in Category:
+            try:
+                catalog = Catalog(language, category)
+                catalog.fetch_catalog()
+                print(catalog)
+
+            except KeyError:
+                pass
 
 
 @cli.command()
 def clean(
-    ctx: typer.Context, force: bool = typer.Option(False, "--force", "-F"),
+    ctx: typer.Context,
+    force: bool = typer.Option(False, "--force", "-F"),
+    all_catalogs: bool = typer.Option(False, "--all", is_flag=True),
 ):
     """Removes the cached catalog.
     """
@@ -126,15 +217,30 @@ def clean(
         typer.secho("The --force switch is required!", fg="red")
         raise typer.Exit(-1)
 
-    ctx.obj.cache_file.unlink()
+    if not all_catalogs:
+        ctx.obj.cache_file.unlink()
+        return
+
+    for language in Language:
+        for category in Category:
+            try:
+                Catalog(language, category).cache_file.unlink()
+            except KeyError:
+                pass
 
 
 @cli.command()
-def urls():
-    """List catalog and content URLS.
+def catalogs(ctx: typer.Context):
+    """List available catalogs.
+
+    Lists all available collections in different languages.
+
     """
 
-    from . import _urls as URLS
-
-    for key, value in URLS.items():
-        print(f"{key.upper()}={value}")
+    for language in Language:
+        for category in Category:
+            try:
+                catalog = Catalog(language, category)
+                print(catalog)
+            except KeyError:
+                pass
