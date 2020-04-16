@@ -40,25 +40,24 @@ def main(
     or supported by Springer. Thank you to Springer for making these
     high quality textbooks available at no cost. 
 
-    From `https://www.springernature.com/gp/librarians/news-events/all-news-articles/industry-news-initiatives/free-access-to-textbooks-for-institutions-affected-by-coronaviru/17855960`:
+    |"With the Coronavirus outbreak having an unprecedented impact on
+    |education, Springer Nature is launching a global program to support
+    |learning and teaching at higher education institutions
+    |worldwide. Remote access to educational resources has become
+    |essential. We want to support lecturers, teachers and students
+    |during this challenging period and hope that this initiative will go
+    |some way to help.
+    |
+    |Institutions will be able to access more than 500 key textbooks
+    |across Springer Nature’s eBook subject collections for free. In
+    |addition, we are making a number of German-language Springer medical
+    |training books on emergency nursing freely accessible.  These books
+    |will be available via SpringerLink until at least the end of July."
 
-    "With the Coronavirus outbreak having an unpretextbookscedented
-    impact on education, Springer Nature is launching a global program
-    to support learning and teaching at higher education institutions
-    worldwide. Remote access to educational resources has become
-    essential. We want to support lecturers, teachers and students
-    during this challenging period and hope that this initiative will go
-    some way to help. 
-
-    Institutions will be able to access more than 500 key textbooks
-    across Springer Nature’s eBook subject collections for free. In
-    addition, we are making a number of German-language Springer medical
-    training books on emergency nursing freely accessible.  These books
-    will be available via SpringerLink until at least the end of July."
-
+    Source: `https://www.springernature.com/gp/librarians/news-events/all-news-articles/industry-news-initiatives/free-access-to-textbooks-for-institutions-affected-by-coronaviru/17855960`
+    
     This tool automates the tasks of downloading the Excel-formatted
     catalogs and downloading the files described in the catalog.
-
     """
 
     # EJO The callback function is called before any of the command functions
