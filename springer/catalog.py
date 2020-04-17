@@ -1,14 +1,13 @@
 """the Springer Free Textbook Catalog
 """
 
-import pandas as pd
+import pandas
 import typer
 
 from time import sleep
 from pathlib import Path
 
 from .constants import FileFormat, Language, Category
-
 from .textbook import Textbook
 
 from . import _urls
@@ -104,7 +103,7 @@ class Catalog:
         if not self.cache_file.exists():
             self.fetch_catalog()
 
-        df = pd.read_csv(self.cache_file).dropna(axis=1)
+        df = pandas.read_csv(self.cache_file).dropna(axis=1)
 
         df["Section"] = df["DOI URL"].apply(lambda v: v.split("/")[-2])
         df["Book ID"] = df["DOI URL"].apply(lambda v: v.split("/")[-1])
@@ -127,7 +126,7 @@ class Catalog:
 
         url = url or self.url
 
-        pd.read_excel(url).dropna(axis=1).to_csv(self.cache_file)
+        pandas.read_excel(url).dropna(axis=1).to_csv(self.cache_file)
 
     def textbooks(self, file_format: FileFormat, filter: dict = None) -> Textbook:
         """A generator function that returns initialized Textbook objects.
@@ -184,18 +183,3 @@ class Catalog:
         ) as workitems:
             for textbook in workitems:
                 textbook.save(dest, overwrite=overwrite)
-
-    def list(
-        self, file_format: FileFormat, show_path: bool = False, filter: dict = None,
-    ) -> None:
-        """List available textbooks titles.
-
-        :param file_format: springer.constant.FileFormat
-        :param show_path: bool
-        :param filter: dict <NotImplemented>
-        """
-
-        for count, textbook in enumerate(self.textbooks(file_format, filter), start=1):
-            print(f"Title #{count:03d}: {textbook.title}")
-            if show_path:
-                print(f" Path #{count:03d}> {textbook.path}")
