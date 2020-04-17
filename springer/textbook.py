@@ -97,7 +97,7 @@ class Textbook:
         return self._path
 
     @property
-    def uid(self):
+    def uid(self) -> str:
         """A concatenation of the section and book_id properties.
 
         The uid is used in conjunction with the content_url and suffix
