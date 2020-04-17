@@ -90,8 +90,8 @@ def list(
     file_format: FileFormat = typer.Option(
         FileFormat.pdf, "--format", "-f", show_default=True, show_choices=True
     ),
-    show_path: bool = typer.Option(
-        False, "--show-path", "-p", help="Show generated filename for each book.",
+    long_format: bool = typer.Option(
+        False, "--long-format", "-l", help="Show more information for each book.",
     ),
 ):
     """List titles of textbooks in the catalog.
@@ -108,7 +108,15 @@ def list(
 
     """
 
-    ctx.obj.list(file_format, show_path=show_path)
+    for index, textbook in enumerate(ctx.obj.textbooks(file_format), start=1):
+        print(f"  Title #{index:03d}: ", textbook.title)
+        if long_format:
+            print("        Path> ", textbook.path)
+            print("      Author> ", textbook.author)
+            print("     Edition> ", textbook.edition)
+            print("        ISBN> ", textbook.isbn)
+            print("       EISBN> ", textbook.eisbn)
+            print("     DOI URL> ", textbook.doi_url)
 
 
 @cli.command()
