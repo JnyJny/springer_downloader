@@ -1,7 +1,7 @@
 """
 """
 
-from .constants import FileFormat, Language, Category
+from .constants import FileFormat, Language, Description
 
 _SPRINGER_PDF_URL = "https://link.springer.com/content/pdf"
 _SPRINGER_EPUB_URL = "https://link.springer.com/download/epub"
@@ -19,10 +19,10 @@ _SPRINGER_ANNOUNCEMENT_URL = "https://www.springernature.com/gp/librarians/news-
 _urls = {
     "announcement": _SPRINGER_ANNOUNCEMENT_URL,
     "catalogs": {
-        Language.English: {Category.AllDisciplines: _SPRINGER_CATALOG_EN_URL},
+        Language.English: {Description.All_Disciplines: _SPRINGER_CATALOG_EN_URL},
         Language.German: {
-            Category.AllDisciplines: _SPRINGER_CATALOG_DE_URL,
-            Category.EmergencyNursing: _SPRINGER_NURSING_CATALOG_DE_URL,
+            Description.All_Disciplines: _SPRINGER_CATALOG_DE_URL,
+            Description.Emergency_Nursing: _SPRINGER_NURSING_CATALOG_DE_URL,
         },
     },
     "content": {

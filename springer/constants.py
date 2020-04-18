@@ -5,21 +5,35 @@ from enum import Enum
 
 
 class FileFormat(str, Enum):
-    """Supported file formats"""
+    """Supported file formats."""
 
     pdf = "pdf"
     epub = "epub"
 
+    @property
+    def suffix(self):
+        return f".{self.value}"
+
 
 class Language(str, Enum):
-    """Supported languages"""
+    """Supported languages."""
 
     English: str = "en"
     German: str = "de"
 
 
-class Category(str, Enum):
-    """Catalog categories"""
+class Description(str, Enum):
+    """Catalog descriptions."""
 
-    AllDisciplines: str = "all"
-    EmergencyNursing: str = "med"
+    All_Disciplines: str = "all"
+    Emergency_Nursing: str = "med"
+
+
+class Heirarchy(str, Enum):
+    """Catalog entity heirarchy."""
+
+    Catalogs = "catalogs"
+    Catalog = "catalog"
+    Packages = "packages"
+    Package = "package"
+    Books = "books"
