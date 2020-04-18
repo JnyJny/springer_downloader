@@ -47,41 +47,17 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 **Options**:
 
 * `-L, --lang [en|de]`: Choose catalog language  [default: en]
-* `-C, --category [all|med]`: Choose a catalog catagory.  [default: all]
+* `-D, --description [all|med]`: Choose a catalog description.  [default: all]
 * `--install-completion`: Install completion for the current shell.
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
 **Commands**:
 
-* `catalogs`: List available catalogs.
 * `clean`: Removes the cached catalog.
 * `download`: Download textbooks from Springer.
-* `list`: List titles of textbooks in the catalog.
+* `list`: List books, package, packages, catalog or...
 * `refresh`: Refresh the cached catalog of Springer...
-
-## `springer catalogs`
-
-List available catalogs.
-
-Prints an entry for each known catalog:
-
-
-- Catalog URL
-- Language
-- Category
-- Cache file path
-- Number of books in the catalog.
-
-**Usage**:
-
-```console
-$ springer catalogs [OPTIONS]
-```
-
-**Options**:
-
-* `--help`: Show this message and exit.
 
 ## `springer clean`
 
@@ -91,11 +67,15 @@ Examples
 
 Remove the English language, all disciplines cached catalog:
 
-`$ springer clean -F`
+`$ springer clean --force`
 
 Remove the German language emergency nursing cached catalog:
 
-`$ springer -L de -C med clean -F`
+`$ springer -L de -D med clean --force`
+
+Remove all catalogs:
+
+`$ springer clean --force --all`
 
 **Usage**:
 
@@ -126,7 +106,7 @@ If the --all option is specified, the --dest-path option specifies the
 root directory where files will be stored. Each catalog will save 
 it's textbooks to:
 
-dest_path/language/category/book_file_name.fmt
+dest_path/language/description/book_file_name.fmt
 
 Files that fail to download will be logged to a file named:
 
@@ -154,13 +134,17 @@ Download books in PDF format to `pdfs` with overwriting:
 
 `$ springer download --dest-path pdfs --over-write`
 
-Download all books in PDF from the German all disciplines catalog:
+Download all books in PDF from the German/All_Disciplines catalog:
 
-`$ springer -L de -C all download --dest-path german/all/pdfs`
+`$ springer -L de -D all download --dest-path german/all/pdfs`
 
 Download all books from all catelogs in epub format:
 
-`$ springer download --all --dest-path books --format epub`
+`$ springer download --all --format epub`
+
+Download all books in the 'Computer Science' package in pdf format:
+
+`$ springer download -p Computer`
 
 **Usage**:
 
@@ -170,36 +154,57 @@ $ springer download [OPTIONS]
 
 **Options**:
 
-* `-d, --dest-path PATH`: Destination directory for downloaded files.  [default: /Users/ejo/local/springer]
+* `-p, --package-name TEXT`: Package name to match (partial name OK).
 * `-f, --format [pdf|epub]`: [default: pdf]
+* `-d, --dest-path PATH`: Destination directory for downloaded files.  [default: /Users/ejo/local/springer]
 * `-W, --over-write`: Over write downloaded files.  [default: False]
 * `--all`: Downloads books from all catalogs.
 * `--help`: Show this message and exit.
 
 ## `springer list`
 
-List titles of textbooks in the catalog.
+List books, package, packages, catalog or catalogs,
 
 Examples
 
-List titles available in the default catalog (en-all):
+List titles available in the default catalog:
 
-`$ springer list`
+`$ springer list books`
+
+List packages available in the default catalog:
+
+`$ springer list packages`
 
 List titles available in the German language, all disciplines catalog:
 
-`$ springer --language de --category all list`
+`$ springer --language de --description all list books`
+
+List all eBook packages in the default catalog:
+
+`$ springer list packages`
+
+List all eBook packages in the default catalog whose name match:
+
+`$ springer list package -m science`
+
+List information about the current catalog:
+
+`$ springer list catalog`
+
+List information about the Germal language, Emergency Nursing catalog:
+
+`$ springer --language de --description med list catalog`
 
 **Usage**:
 
 ```console
-$ springer list [OPTIONS]
+$ springer list [OPTIONS] [catalogs|catalog|packages|package|books]
 ```
 
 **Options**:
 
-* `-f, --format [pdf|epub]`: [default: pdf]
-* `-p, --show-path`: Show generated filename for each book.
+* `-m, --match TEXT`: String used for matching.
+* `-l, --long-format`: Display selected information in a longer format.  [default: False]
 * `--help`: Show this message and exit.
 
 ## `springer refresh`
@@ -214,13 +219,13 @@ Update English language catalog:
 
 `$ springer --language en refresh`
 
-Update German language catalog whose category is 'all':
+Update German language catalog whose description is 'all':
 
-`$ springer --language de --category all refresh`
+`$ springer --language de --description all refresh`
 
-Update German language catalog whose category is 'med' with a new URL:
+Update German language catalog whose description is 'med' with a new URL:
 
-`$ springer -L de -C med refresh --url https://example.com/api/endpoint/something/v11`
+`$ springer -L de -D med refresh --url https://example.com/api/endpoint/something/v11`
 
 Update all catalogs:
 
