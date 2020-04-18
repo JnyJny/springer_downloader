@@ -4,6 +4,19 @@
 from enum import Enum
 
 
+class Token(str, Enum):
+    """Unicode Tokens"""
+
+    Stop = "\N{OCTAGONAL SIGN}"
+    Package = "\N{PACKAGE}"
+    Catalog = "\N{BOOKS}"
+    Book = "\N{GREEN BOOK}"
+    Empty = "\N{CLOSED BOOK}"
+
+    def __str__(self):
+        return self.value
+
+
 class FileFormat(str, Enum):
     """Supported file formats."""
 
@@ -22,15 +35,15 @@ class Language(str, Enum):
     German: str = "de"
 
 
-class Description(str, Enum):
-    """Catalog descriptions."""
+class Topic(str, Enum):
+    """Catalog topics."""
 
     All_Disciplines: str = "all"
     Emergency_Nursing: str = "med"
 
 
-class Heirarchy(str, Enum):
-    """Catalog entity heirarchy."""
+class Component(str, Enum):
+    """Catalog components."""
 
     Catalogs = "catalogs"
     Catalog = "catalog"
