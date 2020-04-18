@@ -70,5 +70,10 @@ minor_release: minor push publish
 
 release: patch_release
 
+demo:
+	@make -C demo
+
+
 clean:
-	@/bin/rm -rf *.pdf *.epub DOWNLOAD_ERRORS.txt
+	@/bin/rm -rf *.pdf *.epub DOWNLOAD_ERRORS.txt *.cast
+	@make -C demo clean
