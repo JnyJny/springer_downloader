@@ -6,7 +6,7 @@ import typer
 from loguru import logger
 from pathlib import Path
 
-from .constants import FileFormat, Language, Topic, Component, Token
+from .constants import FileFormat, Language, Topic, Component
 from .catalog import Catalog
 
 
@@ -19,7 +19,7 @@ DOWNLOAD_REPORT = "DOWNLOAD_ERRORS.txt"
 def main(
     ctx: typer.Context,
     language: Language = typer.Option(
-        Language.English,
+        None,
         "--lang",
         "-L",
         show_choices=True,
@@ -27,7 +27,7 @@ def main(
         help="Choose catalog language",
     ),
     topic: Topic = typer.Option(
-        Topic.All_Disciplines,
+        None,
         "--topic",
         "-T",
         show_default=True,
@@ -100,10 +100,45 @@ def main(
 
     try:
         ctx.obj = Catalog(language, topic)
+
     except KeyError as error:
-        value = error.args[0]
-        typer.secho(f"Failed to locate a catalog for '{value}'", fg="red")
+        typer.secho(
+            f"Failed to locate a catalog for: '{error.args[0].value!s}'", fg="red"
+        )
         raise typer.Exit(-1)
+
+
+@cli.command(name="get-default-catalog")
+def get_default_catalog_subcommand():
+    """Print the default catalog identifier.
+
+    This is the default catalog that will be used when listing books and packages.
+    """
+    print(Catalog())
+
+
+@cli.command(name="set-default-catalog")
+def set_default_catalog_subcommand(ctx: typer.Context):
+    """Set default catalog language and topic.
+
+    Examples
+    
+    Set the default catalog to German language:
+
+    `$ springer -L de set-default-catalog`
+
+    Set the default catalog to German and emergency nursing:
+
+    `$ springer -L de -T med set-default-catalog`
+
+    Set the default catalog to English and all disciplines topic:
+
+    `$ springer -L en -T all set-default-catalog`
+
+    Note: The only English language catalog is en-all.
+    """
+    ctx.obj.save_defaults()
+    get_default_catalog_subcommand()
 
 
 @cli.command(name="list")
@@ -120,9 +155,11 @@ def list_subcommand(
         help="Display selected information in a longer format.",
     ),
 ):
-    """List books, package, packages, catalog or catalogs,
+    """List books, package, packages, catalog or catalogs.
 
-    Display information about books, pacakges, and catalogs:
+    Display information about books, packages, and catalogs. Packages are
+    sets of books grouped by subject. There are currently three catalogs
+    available: en-all, de-all and de-med.
 
     Examples
     
@@ -157,7 +194,8 @@ def list_subcommand(
     """
 
     if component == Component.Books:
-        ctx.obj.list_textbooks(long_format)
+
+        ctx.obj.list_textbooks(long_format, match)
         return
 
     if component is Component.Package:
@@ -165,7 +203,7 @@ def list_subcommand(
             for name, package in ctx.obj.packages.items():
                 if match.casefold() in name.casefold():
                     ctx.obj.list_package(name, package, long_format)
-                    return
+            return
         else:
             component = Component.Packages
 
@@ -180,11 +218,7 @@ def list_subcommand(
         catalogs = Catalog.all_catalogs()
 
     for catalog in catalogs:
-        print(catalog)
-        if long_format:
-            for name, package in catalog.packages.items():
-                catalog.list_package(name, package, True)
-        print(f"{Token.Stop}|{catalog.name}")
+        catalog.list_catalog(long_format)
 
 
 @cli.command(name="refresh")
