@@ -6,11 +6,13 @@ import typer
 from loguru import logger
 from pathlib import Path
 
-from .constants import FileFormat, Language, Description, Heirarchy
+from .constants import FileFormat, Language, Topic, Component, Token
 from .catalog import Catalog
 
 
 cli = typer.Typer()
+
+DOWNLOAD_REPORT = "DOWNLOAD_ERRORS.txt"
 
 
 @cli.callback()
@@ -24,13 +26,13 @@ def main(
         show_default=True,
         help="Choose catalog language",
     ),
-    description: Description = typer.Option(
-        Description.All_Disciplines,
-        "--description",
-        "-D",
+    topic: Topic = typer.Option(
+        Topic.All_Disciplines,
+        "--topic",
+        "-T",
         show_default=True,
         show_choices=True,
-        help="Choose a catalog description.",
+        help="Choose a catalog topic.",
     ),
 ):
     """Springer Textbook Bulk Download Tool
@@ -70,15 +72,34 @@ def main(
     `$ python3 -m pip install git+https://github.com/JnyJny/springer_downloader`
 
     The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
+
+    Catalogs are lists of books in specific _language_, spanning a _topic_. Catalogs
+    are further subdivided into _packages_ which are books grouped by subtopics.
+
+    The available languages are:
+    \b
+    - English 
+    - German
+
+    The available topics are:
+
+    \b
+    - `All Disciplies`, all, 
+    - `Emergency Nursing`, med.
+
+    Note: The Emergency Nursing topic is not currently available in English.
     """
 
     # EJO The callback function is called before any of the command functions
     #     are invoked. Since all the subcommands work with an instantiation of
-    #     springer.catalog.Catalog, we create one in the callback and attach
-    #     it to the typer.Context object using the attribute 'obj'.
+    #     springer.catalog.Catalog, we create one in the callback and attach it
+    #     to the typer.Context object using the attribute 'obj'. I don't
+    #     particularly care for accessing the catalog as 'ctx.obj' in the
+    #     subcommands, but I haven't found a better solution to this "problem"
+    #     yet.
 
     try:
-        ctx.obj = Catalog(language, description)
+        ctx.obj = Catalog(language, topic)
     except KeyError as error:
         value = error.args[0]
         typer.secho(f"Failed to locate a catalog for '{value}'", fg="red")
@@ -88,7 +109,7 @@ def main(
 @cli.command(name="list")
 def list_subcommand(
     ctx: typer.Context,
-    heirarchy: Heirarchy,
+    component: Component,
     match: str = typer.Option(None, "--match", "-m", help="String used for matching."),
     long_format: bool = typer.Option(
         False,
@@ -100,6 +121,8 @@ def list_subcommand(
     ),
 ):
     """List books, package, packages, catalog or catalogs,
+
+    Display information about books, pacakges, and catalogs:
 
     Examples
     
@@ -113,7 +136,7 @@ def list_subcommand(
 
     List titles available in the German language, all disciplines catalog:
 
-    `$ springer --language de --description all list books`
+    `$ springer --language de --topic all list books`
 
     List all eBook packages in the default catalog:
 
@@ -129,40 +152,39 @@ def list_subcommand(
 
     List information about the Germal language, Emergency Nursing catalog:
 
-    `$ springer --language de --description med list catalog`
-
-    
+    `$ springer --language de --topic med list catalog`
 
     """
 
-    if heirarchy == Heirarchy.Books:
-        ctx.obj.list_books(long_format)
+    if component == Component.Books:
+        ctx.obj.list_textbooks(long_format)
         return
 
-    if heirarchy is Heirarchy.Package:
+    if component is Component.Package:
         if match:
             for name, package in ctx.obj.packages.items():
                 if match.casefold() in name.casefold():
                     ctx.obj.list_package(name, package, long_format)
                     return
         else:
-            heirarchy = Heirarchy.Packages
+            component = Component.Packages
 
-    if heirarchy is Heirarchy.Packages:
+    if component is Component.Packages:
         ctx.obj.list_packages(long_format)
         return
 
-    if heirarchy is Heirarchy.Catalog:
+    if component is Component.Catalog:
         catalogs = [ctx.obj]
 
-    if heirarchy is Heirarchy.Catalogs:
+    if component is Component.Catalogs:
         catalogs = Catalog.all_catalogs()
 
     for catalog in catalogs:
         print(catalog)
         if long_format:
-            list_subcommand(ctx, Heirarchy.Packages, long_format)
-        print("\N{OCTAGONAL SIGN}")
+            for name, package in catalog.packages.items():
+                catalog.list_package(name, package, True)
+        print(f"{Token.Stop}|{catalog.name}")
 
 
 @cli.command(name="refresh")
@@ -183,11 +205,11 @@ def refresh_subcommand(
 
     `$ springer --language en refresh`
 
-    Update German language catalog whose description is 'all':
+    Update German language catalog whose topic is 'all':
 
-    `$ springer --language de --description all refresh`
+    `$ springer --language de --topic all refresh`
 
-    Update German language catalog whose description is 'med' with a new URL:
+    Update German language catalog whose topic is 'med' with a new URL:
 
     `$ springer -L de -D med refresh --url https://example.com/api/endpoint/something/v11`
 
@@ -217,13 +239,13 @@ def clean_subcommand(
 
     Examples
 
-    Remove the English language, all disciplines cached catalog:
+    Remove the cached default catalog:
 
     `$ springer clean --force`
 
-    Remove the German language emergency nursing cached catalog:
+    Remove the cached German language emergency nursing catalog:
 
-    `$ springer -L de -D med clean --force`
+    `$ springer --language de --topic med clean --force`
 
     Remove all catalogs:
     
@@ -285,7 +307,7 @@ def download_subcommand(
     root directory where files will be stored. Each catalog will save 
     it's textbooks to:
     
-    dest_path/language/description/book_file_name.fmt
+    dest_path/language/topic/book_file_name.fmt
 
     Files that fail to download will be logged to a file named:
 
@@ -315,7 +337,7 @@ def download_subcommand(
 
     Download all books in PDF from the German/All_Disciplines catalog:
     
-    `$ springer -L de -D all download --dest-path german/all/pdfs`
+    `$ springer --language de --topic all download --dest-path german/all/pdfs`
 
     Download all books from all catelogs in epub format:
 
@@ -323,14 +345,14 @@ def download_subcommand(
 
     Download all books in the 'Computer Science' package in pdf format:
 
-    `$ springer download -p Computer`
+    `$ springer download --package-name Computer`
     """
 
     logger.configure(
         **{
             "handlers": [
                 {
-                    "sink": dest_path / "DOWNLOAD_ERRORS.txt",
+                    "sink": dest_path / DOWNLOAD_REPORT,
                     "format": "{time:YYYY-MM-DD HH:mm} | <red>{message}</>",
                     "colorize": True,
                 },
@@ -348,5 +370,8 @@ def download_subcommand(
         return
 
     for catalog in Catalog.all_catalogs():
-        dest = dest_path / catalog.language.name / catalog.description.value
+        dest = dest_path / catalog.language.name / catalog.topic.value
+        if package:
+            catalog.download_package(package, dest_path, file_format, overwrite)
+            continue
         catalog.download(dest, file_format, overwrite=overwrite)

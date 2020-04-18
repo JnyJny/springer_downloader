@@ -11,7 +11,7 @@ from loguru import logger
 from time import sleep
 from pathlib import Path
 
-from .constants import FileFormat, Language, Description
+from .constants import FileFormat, Language, Topic, Token
 
 from . import _urls
 
@@ -19,6 +19,7 @@ from . import _urls
 _ttable = str.maketrans(
     {
         "/": "_",
+        "\\": "_",
         " ": "_",
         ":": "",
         ".": "",
@@ -32,6 +33,8 @@ _ttable = str.maketrans(
         "*": "",
         "?": "",
         "®": "",
+        "`": "",
+        "~": "",
     }
 )
 
@@ -44,43 +47,41 @@ class Catalog:
     @classmethod
     def all_catalogs(cls):
         """Generator classmethod that returns a configured Catalog
-        for all valid combinations of Language and Description.
+        for all valid combinations of Language and Topic.
         """
-        for language, description in product(Language, Description):
+        for language, topic in product(Language, Topic):
             try:
-                yield cls(language, description)
+                yield cls(language, topic)
             except KeyError:
                 pass
 
-    def __init__(
-        self,
-        language: Language = None,
-        description: Description = None,
-        refresh: bool = False,
-    ):
+    def __init__(self, language: Language = None, topic: Topic = None):
         """
         :param url: str
-        :param refresh: bool
         """
         self.language = language or Language.English
-        self.description = description or Description.AllDisciplines
+        self.topic = topic or Topic.AllDisciplines
 
-        if not self.cache_file.exists() or refresh:
+        if not self.cache_file.exists():
             self.fetch_catalog()
 
     def __repr__(self):
 
-        return f"{self.__class__.__name__}(language={self.language}, description={self.description})"
+        return (
+            f"{self.__class__.__name__}(language={self.language}, topic={self.topic})"
+        )
 
     def __str__(self):
-        desc = self.description.name.replace("_", " ")
+        desc = self.topic.name.replace("_", " ")
         s = []
-        s.append(f"\N{BOOKS}         URL: {self.url}")
-        s.append(f"\N{BOOKS}    Language: {self.language}/{self.language.name}")
-        s.append(f"\N{BOOKS} Description: {self.description}/{desc!r}")
-        s.append(f"\N{BOOKS}  Cache File: {self.cache_file}")
-        s.append(f"\N{BOOKS}       Books: {self.dataframe.count().max()}")
-        s.append(f"\N{BOOKS}    Packages: {len(self.packages)}")
+        s.append(f"{Token.Catalog.value}         URL: {self.url}")
+        s.append(
+            f"{Token.Catalog.value}    Language: {self.language}/{self.language.name}"
+        )
+        s.append(f"{Token.Catalog} Topic: {self.topic}/{desc!r}")
+        s.append(f"{Token.Catalog}  Cache File: {self.cache_file}")
+        s.append(f"{Token.Catalog}       Books: {self.dataframe.count().max()}")
+        s.append(f"{Token.Catalog}    Packages: {len(self.packages)}")
 
         return "\n".join(s)
 
@@ -93,7 +94,7 @@ class Catalog:
             return self._name
         except AttributeError:
             pass
-        self._name = f"{self.description}-{self.language}"
+        self._name = f"{self.topic}-{self.language}"
         return self._name
 
     @property
@@ -103,7 +104,7 @@ class Catalog:
         except AttributeError:
             pass
 
-        self._url = _urls["catalogs"][self.language][self.description]
+        self._url = _urls["catalogs"][self.language][self.topic]
 
         return self._url
 
@@ -138,15 +139,19 @@ class Catalog:
         except AttributeError:
             pass
 
-        self._cache_file = (
-            self.app_dir / f"catalog-{self.language}-{self.description}.csv"
-        )
+        self._cache_file = self.app_dir / f"catalog-{self.language}-{self.topic}.csv"
 
         return self._cache_file
 
     @property
     def dataframe(self) -> pandas.DataFrame:
         """A pandas.DataFrame populated with the contents of the Springer free textbook catalog.
+
+        Column names are lower-cased and embedded spaces replaced with underscores.
+        Columns added: uid, package_name
+        Columns removed: english_package_name, german_package_name, "Unnamed: 0"
+
+        The dataframe is sorted by book_title in ascending order.
         """
         try:
             return self._dataframe
@@ -162,15 +167,37 @@ class Catalog:
 
         df.sort_values(by="Book Title", ascending=True, inplace=True)
 
-        df.drop(columns="Unnamed: 0", inplace=True)
+        try:
+            df.drop(columns="Unnamed: 0", inplace=True)
+        except KeyError:
+            pass
 
-        # normalize column names to make them easier to use
+        # normalize column names to make them easier to use. in this case,
+        # it means replacing embedded spaces with underscores and lower
+        # casing the resultant string. The column names should then be
+        # valid python identifiers which makes the dataframe easier to use.
+
         df.columns = [c.lower().replace(" ", "_") for c in df.columns]
+
+        # German language catalogs have 'German Package Name' and 'English
+        # Package Name' columns where the English column is empty. To make
+        # things easier later on, I remove the english_package_name column
+        # (normalized form) from the German catalogs and rename all the
+        # remaining "<language>_package_name" columns to "package_name".
 
         if "german_package_name" in df.columns:
             df["package_name"] = df["german_package_name"]
         else:
             df["package_name"] = df["english_package_name"]
+
+        # For each book in the catalog, construct a filename stem whis is:
+        # - descriptive of the book.
+        # - unique
+        # - a valid file name for most modern filesystems.
+        #
+        # Settled on {book_title}-{springer_section}-{eisbn} and then
+        # applying a translationg table, `_ttable` to the resulting string
+        # to clean up punctuation and embedded spaces, periods and slashes.
 
         df["path"] = (
             df["book_title"]
@@ -183,31 +210,19 @@ class Catalog:
         return self._dataframe
 
     @property
-    def package_names(self) -> list:
-        try:
-            return self._packages
-        except AttributeError:
-            pass
-
-        self._packages = self.dataframe.package_name.unique().tolist()
-        return self._packages
-
-    @property
     def packages(self) -> dict:
-        """Dictionary of pandas.DataFrames whose keys are package names.
+        """Dictionary of pandas.DataFrames whose keys are eBook package names.
         """
         try:
             return self._packages
         except AttributeError:
             pass
 
-        df = self.dataframe.sort_values(by=["package_name", "book_title"])
+        pkg_dfs = [pkg for _, pkg in self.dataframe.groupby("package_name")]
 
-        dfs = [pkg for _, pkg in df.groupby("package_name")]
+        pkg_names = [x.package_name.unique()[0] for x in pkg_dfs]
 
-        names = [x.package_name.unique()[0] for x in dfs]
-
-        self._packages = dict(zip(names, dfs))
+        self._packages = dict(zip(pkg_names, pkg_dfs))
 
         return self._packages
 
@@ -299,26 +314,34 @@ class Catalog:
             return item.book_title[:40]
 
         with typer.progressbar(
-            dataframe.itertuples(index=False, name="Textbook"),
+            self.textbooks(dataframe),
             length=len(dataframe),
             label=f"{self.name}:{file_format}",
             show_percent=False,
             show_pos=True,
             width=10,
-            empty_char="\N{CLOSED BOOK}",
-            fill_char="\N{GREEN BOOK}",
+            empty_char=Token.Empty,
+            fill_char=Token.Book,
             item_show_func=show_title,
         ) as workitems:
             for textbook in workitems:
                 self.download_book(textbook, dest, file_format, overwrite=overwrite)
         return
 
-    def books(self):
-        """
+    def textbooks(self, dataframe: pandas.DataFrame = None) -> tuple:
+        """This generator function returns a namedtuple for each row in `dataframe`.
+
+        If `dataframe` is got supplied, `self.dataframe` is used. 
+
+        :param dataframe: pandas.DataFrame
+        :return: namedtuple called 'TextBook'
         """
 
-        for book in self.dataframe.itertuples(index=None, name="Book"):
-            yield book
+        if dataframe is None:
+            dataframe is self.dataframe
+
+        for textbook in dataframe.itertuples(index=None, name="Textbook"):
+            yield textbook
 
     def download(self, dest: Path, file_format: FileFormat, overwrite: bool) -> int:
         """Download all the textbooks in this catalog to `dest` with format `file_format`.
@@ -331,41 +354,57 @@ class Catalog:
         return self.download_dataframe(dest, file_format, overwrite)
 
     def list_dataframe(self, dataframe: pandas.DataFrame, long_format: bool) -> None:
-        """
-        """
+        """Displays one line per book described in the source `dataframe`. 
 
-        for index, textbook in enumerate(
-            dataframe.itertuples(index=None, name="Textbook"), start=1
-        ):
-            if long_format:
-                print(
-                    f"\N{GREEN BOOK}|{index:3d}|{textbook.book_title!r}|{textbook.electronic_isbn!r}"
-                )
-            else:
-                print(repr(textbook.book_title))
-
-    def list_books(self, long_format: bool) -> None:
-        """
+        :param dataframe: pandas.DataFrame
+        :param long_format: bool
         """
 
         if long_format:
-            df = self.dataframe.sort_values(by=["package_name", "book_title"])
-        else:
-            df = self.dataframe.sort_values(by="book_title")
+            print(f"{Token.Book}|NDX|PkgID|Electronic ISBN  |Title|Author")
 
-        self.list_dataframe(df, long_format)
+        for index, textbook in enumerate(self.textbooks(dataframe), start=1):
+            if long_format:
+                fields = [
+                    Token.Book,
+                    f"{index:3d}",
+                    f"{textbook.ebook_package}",
+                    f"{textbook.electronic_isbn:17}",
+                    f"{textbook.book_title}",
+                    f"{textbook.author}",
+                ]
+                print("|".join(fields))
+            else:
+                print(f"{Token.Book}|{textbook.book_title}")
+
+    def list_textbooks(self, long_format: bool) -> None:
+        """Displays all books in a catalog, one line per book.
+        """
+
+        self.list_dataframe(self.dataframe, long_format)
 
     def list_package(
         self, name: str, package: pandas.DataFrame, long_format: bool,
     ):
         """
         """
-        print(f"\N{PACKAGE} #books={len(package):02d} {name!r}  ")
+
+        pid = package.ebook_package.unique()[0]
+        cnt = len(package)
+
+        if long_format:
+            print(f"{Token.Package}|#Bk|PkgID|Name")
+
+        print(f"{Token.Package}|{cnt:3d}|{pid}|{name}")
         if long_format:
             self.list_dataframe(package, True)
 
     def list_packages(self, long_format: bool) -> None:
         """
         """
+
+        if not long_format:
+            print(f"{Token.Package}|#Bk|PkgID|Name")
+
         for name, package in self.packages.items():
             self.list_package(name, package, long_format)
