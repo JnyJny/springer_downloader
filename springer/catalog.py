@@ -339,7 +339,7 @@ class Catalog:
         ):
             if long_format:
                 print(
-                    f"\N{GREEN BOOK} {index:3d} {textbook.book_title!r}, {textbook.electronic_isbn!r}"
+                    f"\N{GREEN BOOK}|{index:3d}|{textbook.book_title!r}|{textbook.electronic_isbn!r}"
                 )
             else:
                 print(repr(textbook.book_title))
