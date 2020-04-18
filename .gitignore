@@ -4,3 +4,4 @@ dist/*
 *.egg-info/*
 DOWNLOAD_ERRORS.txt
 tst.py
+*.cast
