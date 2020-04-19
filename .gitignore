@@ -5,3 +5,4 @@ dist/*
 DOWNLOAD_ERRORS.txt
 tst.py
 *.cast
+.DS_Store
