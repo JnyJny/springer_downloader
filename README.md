@@ -25,8 +25,9 @@ high quality textbooks available at no cost.
 
 [Source](https://www.springernature.com/gp/librarians/news-events/all-news-articles/industry-news-initiatives/free-access-to-textbooks-for-institutions-affected-by-coronaviru/17855960)
 
-This tool automates the tasks of downloading the Excel-formatted
-catalogs and downloading the files described in the catalog.
+This tool automates the tasks of downloading the Springer provided
+Excel-formatted catalogs and downloading the files described in the
+catalog.
 
 This utility can be installed using `pip`:
 
@@ -70,7 +71,7 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `clean-catalog`: Removes cached catalogs.
+* `clean-catalog`: Remove cached catalogs.
 * `download`: Download textbooks from Springer.
 * `get-default-catalog`: Print the default catalog identifier.
 * `list`: List books, package, packages, catalog or...
@@ -79,7 +80,7 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 
 ## `springer clean-catalog`
 
-Removes cached catalogs.
+Remove cached catalogs.
 
 __Examples__
 
@@ -87,7 +88,7 @@ Remove the cached default catalog:
 
 `$ springer clean-catalog --force`
 
-Remove the cached German language Emergency Nursing catalog:
+Remove the cached German language _Emergency Nursing_ catalog:
 
 `$ springer --language de --topic med clean-catalog --force`
 
@@ -201,8 +202,7 @@ $ springer get-default-catalog [OPTIONS]
 List books, package, packages, catalog or catalogs.
 
 Display information about books, packages, and catalogs. Packages
-are sets of books grouped by subject. There are catalogs available:
-`en-all`, `de-all` and `de-med`.
+are sets of books grouped by subject.
 
 __Examples__
 
@@ -254,17 +254,19 @@ If `--all` is specified, the `--url` option is ignored.
 
 __Examples__
 
-Update english language catalog:
+Update English language catalog:
 
 `$ springer --language en refresh`
 
-Update german language catalog whose topic is 'all':
+Update German language catalog whose topic is 'all':
 
 `$ springer --language de --topic all refresh`
 
-Update german language catalog whose topic is 'med' with a new url:
+Update German language catalog whose topic is 'med' with a new url:
 
 `$ springer -l de -d med refresh --url https://example.com/api/endpoint/something/v11`
+
+__NOTE: THIS URL DOES NOT REPLACE THE DEFAULT URL FOR THE TARGET CATALOG__
 
 Update all catalogs:
 
