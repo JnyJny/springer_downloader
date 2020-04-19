@@ -73,8 +73,9 @@ def main(
 
     The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
 
-    Catalogs are lists of books in specific _language_, spanning a _topic_. Catalogs
-    are further subdivided into _packages_ which are books grouped by subtopics.
+    Catalogs are lists of books in a specific _language_, spanning a _topic_. Catalogs
+    are further subdivided into _packages_ which are books grouped by subtopics. The
+    smallest unit of download currently is a package.
 
     The available languages are:
     \b
@@ -84,7 +85,7 @@ def main(
     The available topics are:
 
     \b
-    - `All Disciplies`, all, 
+    - `All Disciplines`, all,
     - `Emergency Nursing`, med.
 
     Note: The Emergency Nursing topic is not currently available in English.
@@ -112,13 +113,15 @@ def main(
 def get_default_catalog_subcommand():
     """Print the default catalog identifier.
 
-    This is the default catalog that will be used when listing books and packages.
+    This is the default catalog that will be used when listing books and packages
+    and the user has not specified a --language or --topic on the command line.
     """
-    print(Catalog())
+
+    typer.secho(f"Default: {Catalog(fetch=False)}", fg="green")
 
 
 @cli.command(name="set-default-catalog")
-def set_default_catalog_subcommand(ctx: typer.Context):
+def set_default_catalog_subcommand(ctx: typer.Context,):
     """Set default catalog language and topic.
 
     Examples
@@ -137,8 +140,12 @@ def set_default_catalog_subcommand(ctx: typer.Context):
 
     Note: The only English language catalog is en-all.
     """
+    default = Catalog(fetch=False)
     ctx.obj.save_defaults()
-    get_default_catalog_subcommand()
+    typer.secho(
+        f"Old Default: {default}", fg="red" if default.name == ctx.obj.name else "blue"
+    )
+    typer.secho(f"New Default: {Catalog(fetch=False)}", fg="green")
 
 
 @cli.command(name="list")
@@ -221,35 +228,35 @@ def list_subcommand(
         catalog.list_catalog(long_format)
 
 
-@cli.command(name="refresh")
+@cli.command(name="refresh-catalog")
 def refresh_subcommand(
     ctx: typer.Context,
     catalog_url: str = typer.Option(
-        None, "--url", "-u", help="URL for Excel-formatted catalog"
+        None, "--url", "-u", help="URL for Excel-formatted catalog."
     ),
     all_catalogs: bool = typer.Option(False, "--all", is_flag=True),
 ):
-    """Refresh the cached catalog of Springer textbooks.
+    """Refresh the cached catalog of springer textbooks.
 
     If --all is specified, the --url option is ignored.
 
     Examples
 
-    Update English language catalog:
+    Update english language catalog:
 
     `$ springer --language en refresh`
 
-    Update German language catalog whose topic is 'all':
+    Update german language catalog whose topic is 'all':
 
     `$ springer --language de --topic all refresh`
 
-    Update German language catalog whose topic is 'med' with a new URL:
+    Update german language catalog whose topic is 'med' with a new url:
 
-    `$ springer -L de -D med refresh --url https://example.com/api/endpoint/something/v11`
+    `$ springer -l de -d med refresh --url https://example.com/api/endpoint/something/v11`
 
     Update all catalogs:
 
-    `$ springer refresh --all`
+    `$ springer refresh-catalog --all`
 
     """
 
@@ -263,27 +270,27 @@ def refresh_subcommand(
         print(catalog)
 
 
-@cli.command(name="clean")
+@cli.command(name="clean-catalog")
 def clean_subcommand(
     ctx: typer.Context,
     force: bool = typer.Option(False, "--force", "-F", is_flag=True),
     all_catalogs: bool = typer.Option(False, "--all", is_flag=True),
 ):
-    """Removes the cached catalog.
+    """Removes cached catalogs.
 
     Examples
 
     Remove the cached default catalog:
 
-    `$ springer clean --force`
+    `$ springer clean-catalog --force`
 
-    Remove the cached German language emergency nursing catalog:
+    Remove the cached German language Emergency Nursing catalog:
 
-    `$ springer --language de --topic med clean --force`
+    `$ springer --language de --topic med clean-catalog --force`
 
     Remove all catalogs:
     
-    `$ springer clean --force --all`
+    `$ springer clean-catalog --force --all`
     """
 
     if not force:
@@ -335,7 +342,7 @@ def download_subcommand(
 
     If a download is interrupted, you can re-start the download and it
     will skip over files that have been previously downloaded and pick up
-    where it left off. 
+    where it left off.
 
     If the --all option is specified, the --dest-path option specifies the
     root directory where files will be stored. Each catalog will save 
@@ -398,7 +405,11 @@ def download_subcommand(
 
     if not all_catalogs:
         if package:
-            ctx.obj.download_package(package, dest_path, file_format, overwrite)
+            try:
+                ctx.obj.download_package(package, dest_path, file_format, overwrite)
+            except ValueError as error:
+                typer.secho(str(error), fg="red")
+                raise typer.Exit(-1) from None
             return
         ctx.obj.download(dest_path, file_format, overwrite)
         return
