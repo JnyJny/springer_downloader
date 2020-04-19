@@ -5,6 +5,8 @@ import pandas
 import toml
 import typer
 import requests
+import string
+import sys
 
 from itertools import product
 from loguru import logger
@@ -15,33 +17,24 @@ from .constants import FileFormat, Language, Topic, Token
 
 from . import _urls
 
-
-_ttable = str.maketrans(
-    {
-        "/": "_",
-        "\\": "_",
-        " ": "_",
-        ":": "",
-        ".": "",
-        ",": "",
-        '"': "",
-        "'": "",
-        "(": "",
-        ")": "",
-        "{": "",
-        "}": "",
-        "*": "",
-        "?": "",
-        "®": "",
-        "`": "",
-        "~": "",
-    }
-)
+# XXX remove typer
 
 
 class Catalog:
-    """A wrapper around an Excel file provided by Springer, listing information
-    about the textbooks offered free of charge.
+    """Manage Springer's Excel-formated catalogs of textbooks
+
+    This class simplifies using the Excel catalogs of textbooks Springer
+    has made available free of charge. The class can manage the
+    various catalogs, list the contents of the catalogs and finally
+    use the catalogs to download textbooks to the local filesystem
+
+    Using it is pretty simple:
+
+    > from springer.catalog import Catalog
+    > catalog = Catalog()
+    > # will download and cache the initial default catalog 'en-all'
+    
+
     """
 
     @classmethod
@@ -55,37 +48,39 @@ class Catalog:
             except KeyError:
                 pass
 
-    def __init__(self, language: Language = None, topic: Topic = None):
+    def __init__(
+        self, language: Language = None, topic: Topic = None, fetch: bool = True
+    ):
         """
         :param language: springer.constants.Language
         :param topic: springer.constants.Topic
+        :param fetch: bool
         """
 
         self.language = language or Language(self.defaults.get("language", "en"))
         self.topic = topic or Topic(self.defaults.get("topic", "all"))
 
-        if not self.cache_file.exists():
+        if not self.cache_file.exists() and fetch:
             try:
                 self.fetch_catalog()
-            except KeyError as error:
+            except Exception as error:
                 raise error from None
 
     def __repr__(self):
-
         return (
             f"{self.__class__.__name__}(language={self.language}, topic={self.topic})"
         )
 
     def __str__(self):
-
         return f"{Token.Catalog}|{self.name}"
 
     def __iter__(self):
-        return self.books()
+        """An iterator over all textbooks in a catalog."""
+        return self.textbooks()
 
     @property
     def name(self) -> str:
-        """An identifier formed from `topic-language`."""
+        """An identifier formed from `language`-`topic`."""
         try:
             return self._name
         except AttributeError:
@@ -97,7 +92,11 @@ class Catalog:
     def is_default(self) -> bool:
         """Returns True if this catalog has the default language and topic."""
 
-        return Catalog().name == self.name
+        # Avoid fetching the Catalog, normally shouldn't be a problem
+        # but can slow down this method if the catalog hasn't been cached
+        # locally yet.
+
+        return Catalog(fetch=False).name == self.name
 
     @property
     def url(self) -> str:
@@ -125,18 +124,20 @@ class Catalog:
         return _urls["content"][file_format] + f"/{uid}.{file_format}"
 
     @property
-    def app_dir(self) -> Path:
-        """The pathlib.Path specifying the application specific directory.
+    def config_dir(self) -> Path:
+        """The pathlib.Path for the application-specific configuration directory.
+
+        Configuration files and cached catalog CSV files are kept here.
         """
         try:
-            return self._app_dir
+            return self._config_dir
         except AttributeError:
             pass
 
-        self._app_dir = Path(typer.get_app_dir(__package__))
-        self._app_dir.mkdir(mode=0o755, exist_ok=True)
+        self._config_dir = Path(typer.get_app_dir(__package__))
+        self._config_dir.mkdir(mode=0o755, exist_ok=True)
 
-        return self._app_dir
+        return self._config_dir
 
     @property
     def defaults_file(self) -> Path:
@@ -145,7 +146,7 @@ class Catalog:
             return self._defaults_file
         except AttributeError:
             pass
-        self._defaults_file = self.app_dir / "catalog_defaults.toml"
+        self._defaults_file = self.config_dir / "catalog_defaults.toml"
         return self._defaults_file
 
     @property
@@ -159,7 +160,7 @@ class Catalog:
         return contents
 
     def save_defaults(self) -> None:
-        """
+        """Saves this instance's langauage and topic values to `defaults_file`.
         """
         updated = {"language": self.language.value, "topic": self.topic.value}
         try:
@@ -171,27 +172,55 @@ class Catalog:
 
     @property
     def cache_file(self) -> Path:
-        """pathlib.Path for the locally cached catalog.
+        """pathlib.Path for the locally cached catalog in CSV format.
         """
         try:
             return self._cache_file
         except AttributeError:
             pass
 
-        self._cache_file = self.app_dir / f"catalog-{self.language}-{self.topic}.csv"
+        self._cache_file = self.config_dir / f"catalog-{self.name}.csv"
 
         return self._cache_file
+
+    @property
+    def ttable(self) -> dict:
+        """
+        """
+        try:
+            return self._ttable
+        except AttributeError:
+            pass
+
+        table = {p: "" for p in string.punctuation}
+        table.update({w: "_" for w in string.whitespace})
+        table.update({"/": "_", "\\": "_"})
+        table.update({"™": "", "®": ""})
+
+        self._ttable = str.maketrans(table)
+
+        return self._ttable
 
     @property
     def dataframe(self) -> pandas.DataFrame:
         """A pandas.DataFrame populated with the contents of the Springer free textbook catalog.
 
-        Column names are lower-cased and embedded spaces replaced with underscores.
-        Columns added: uid, package_name, title
-        Columns removed: english_package_name, german_package_name, "Unnamed: 0"
+        The dataframe source data is the cached CSV-formatted file
+        `cache_file` and we transform the cached data everytime we
+        construct the dataframe rather than applying it to the cached
+        file. This seemed simpler for handling cached catalog updates.
 
-        The dataframe is sorted by book_title in ascending order.
+        The source data is modified to make it easier to work with:
+
+        - Empty rows are dropped
+        - Column names are lower-cased and embedded spaces replaced with underscores.
+        - Columns added: uid, package_name, title, filename
+        - Columns removed: "Unnamed: 0" if present
+
+        Finally, the dataframe is sorted by title and author in
+        ascending order.
         """
+
         try:
             return self._dataframe
         except AttributeError:
@@ -202,78 +231,70 @@ class Catalog:
 
         df = pandas.read_csv(self.cache_file).dropna(axis=1)
 
-        df["UID"] = df["DOI URL"].apply(lambda v: "/".join(v.split("/")[-2:]))
-
-        df.sort_values(by="Book Title", ascending=True, inplace=True)
-
         try:
             df.drop(columns="Unnamed: 0", inplace=True)
         except KeyError:
             pass
 
-        # normalize column names to make them easier to use. in this case,
+        # Normalize column names to make them easier to use. In this case,
         # it means replacing embedded spaces with underscores and lower
         # casing the resultant string. The column names should then be
         # valid python identifiers which makes the dataframe easier to use.
 
-        columns = [c.lower().replace(" ", "_") for c in df.columns]
-
-        # Referring to textbook.book_title was getting jarring.
-        # Renamed the 'book_title' column to just 'title'
+        columns = [c.lower().translate(self.ttable) for c in df.columns]
 
         book_title = columns.index("book_title")
         columns.insert(book_title, "title")
         columns.remove("book_title")
 
-        # Ok that's enough.
-
         df.columns = columns
 
         # German language catalogs have 'German Package Name' and 'English
         # Package Name' columns where the English column is empty. To make
-        # things easier later on, I remove the english_package_name column
-        # (normalized form) from the German catalogs and rename all the
-        # remaining "<language>_package_name" columns to "package_name".
+        # things easier later on, I created a new column 'package_name' and
+        # populate it with the appropriate language specific package name.
 
         if "german_package_name" in df.columns:
             df["package_name"] = df["german_package_name"]
         else:
             df["package_name"] = df["english_package_name"]
 
-        # For each book in the catalog, construct a filename stem whis is:
-        # - descriptive of the book.
-        # - unique
-        # - a valid file name for most modern filesystems.
-        #
-        # Settled on {title}-{springer_section}-{eisbn} and then
-        # applying a translationg table, `_ttable` to the resulting string
-        # to clean up punctuation and embedded spaces, periods and slashes.
+        # UID = unique identifier in content download URL
+        df["uid"] = df.doi_url.apply(lambda v: "/".join(v.split("/")[-2:]))
+
+        # The filename is composed of the title and uid columns with different
+        # rules for collapsing punctuation and white space.
+
+        slash_and_dot_to_dash = str.maketrans({"/": "-", ".": "-",})
 
         df["filename"] = (
             df["title"]
-            .str.cat(df["uid"], sep="-")
-            .apply(lambda v: v.translate(_ttable))
+            .apply(lambda v: v.translate(self.ttable))
+            .str.cat(
+                df.uid.apply(lambda v: v.translate(slash_and_dot_to_dash)), sep="-",
+            )
         )
 
-        self._dataframe = df
+        self._dataframe = df.sort_values(by=["title", "author"], ascending=[True, True])
 
         return self._dataframe
 
     @property
     def packages(self) -> dict:
         """Dictionary of pandas.DataFrames values whose keys are eBook package names.
+        
+        Keys are in sorted order.
+
+        Note: please do not mutate the package dataframes.
         """
         try:
             return self._packages
         except AttributeError:
             pass
 
-        pkg_dfs = [pkg for _, pkg in self.dataframe.groupby("package_name")]
-
-        pkg_names = [x.package_name.unique()[0] for x in pkg_dfs]
-
-        self._packages = dict(zip(pkg_names, pkg_dfs))
-
+        self._packages = {
+            name: pkg for name, pkg in self.dataframe.groupby("package_name")
+        }
         return self._packages
 
     def fetch_catalog(self, url: str = None) -> None:
@@ -285,6 +306,7 @@ class Catalog:
         :param url: str
         :return: None
         """
+        # XXX update defaults with new url if one is given and it succeeds?
         pandas.read_excel(url or self.url).dropna(axis=1).to_csv(self.cache_file)
 
     def textbooks(self, dataframe: pandas.DataFrame = None) -> tuple:
@@ -293,7 +315,7 @@ class Catalog:
         If `dataframe` is got supplied, `self.dataframe` is used. 
 
         :param dataframe: pandas.DataFrame
-        :return: namedtuple called 'TextBook'
+        :return: generator returning namedtuples called 'TextBook'
         """
 
         if dataframe is None:
@@ -305,7 +327,30 @@ class Catalog:
     def download_book(
         self, textbook: tuple, dest: Path, file_format: FileFormat, overwrite: bool,
     ) -> int:
-        """Download the book `textbook` to `dest` with format `file_format`.
+        """Download `textbook` to `dest` with format `file_format`.
+
+        If destination path does not currently exist, it will be
+        created.
+
+        If the destination path exists and overwrite is False, a skipped
+        entry for that textbook will be logged to the download report and
+        zero bytes written is returned.
+
+        If the textbook fails to download, an entry is logged to the
+        download report with the HTTP status code and URL of the
+        attemtped textbook. Again, zero bytes written is returned to
+        the caller.
+
+        Finally, the data received via HTTP is written to the local
+        filesystem. The path to save the data is constructed using
+        `dest`, the textbook.filename field and `file_format`.suffix.
+
+        If the user interrupts saving the file to the local filesystem,
+        the partial file is removed and the path is logged to the
+        download report. The intention is to avoid leaving a truncated
+        file for the user to trip on later. Not a delighter.
+
+        The number of bytes written to the local filesystem is returned.
 
         :param textbook: namedtuple
         :param dest: Path
@@ -313,8 +358,6 @@ class Catalog:
         :param overwrite: bool
         :return: int <bytes written>
         """
-
-        dest.mkdir(mode=0o755, exist_ok=True, parents=True)
 
         path = (dest / textbook.filename).with_suffix(file_format.suffix)
 
@@ -330,12 +373,21 @@ class Catalog:
             logger.debug(f"{response} {url}")
             return 0
 
-        size = 0
-        with path.open("wb") as fp:
-            for chunk in response.iter_content(chunk_size=8192):
-                size += len(chunk)
-                fp.write(chunk)
-        return size
+        try:
+            size = 0
+            with path.open("wb") as fp:
+                for chunk in response.iter_content(chunk_size=8192):
+                    size += len(chunk)
+                    fp.write(chunk)
+            return size
+        except KeyboardInterrupt:
+            # The user has aborted the download and we don't want to leave a
+            # partially downloaded file to upset them later. Remove the
+            # partial file, issue a log entry with the aborted path and
+            # re-raise the exception.
+            path.unlink()
+            logger.debug(f"User aborted, removed partial file: {path}")
+            raise
 
     def download_dataframe(
         self,
@@ -343,13 +395,17 @@ class Catalog:
         file_format: FileFormat,
         overwrite: bool,
         dataframe: pandas.DataFrame = None,
+        use_progressbar: bool = True,
     ) -> int:
         """Downloads all the textbooks in `dataframe` to `dest` with format `file_format`.
+
+        The download is animated using a `typer.progressbar` if `use_progrssbar` is True.
 
         :param dest: pathlib.path
         :param file_format: springer.constants.FileFormat
         :param overwrite: bool
         :param dataframe: pandas.DataFrame
+        :param use_progressbar: bool
         :return: int <bytes written>
         """
 
@@ -361,7 +417,6 @@ class Catalog:
                 return f"Downloaded to {dest}"
             return item.title[:40]
 
-        total = 0
         with typer.progressbar(
             self.textbooks(dataframe),
             length=len(dataframe),
@@ -372,41 +427,65 @@ class Catalog:
             empty_char=Token.Empty,
             fill_char=Token.Book,
             item_show_func=show_title,
+            file=sys.stdout if use_progressbar else None,
         ) as workitems:
             for textbook in workitems:
-                total += self.download_book(
-                    textbook, dest, file_format, overwrite=overwrite
-                )
-
-        return total
+                total = 0
+                for textbook in workitems:
+                    total += self.download_book(
+                        textbook, dest, file_format, overwrite=overwrite
+                    )
+            return total
 
     def download_package(
-        self, package: str, dest: Path, file_format: FileFormat, overwrite: bool
+        self,
+        package: str,
+        dest: Path,
+        file_format: FileFormat,
+        overwrite: bool,
+        animated: bool = True,
     ) -> int:
-        """Download all the textbooks that belong to `package` to `dest` with format `file_format`.
+        """Download all the textbooks in `package` to `dest` with format `file_format`.
 
         :param package: str
         :param dest: pathlib.path
         :param file_format: springer.constants.FileFormat
         :param overwrite: bool
+        :param animated: bool
         :return: int <bytes written>
+
+        Raises KeyError if the requested package does not match any package.
         """
 
         df = self.dataframe[
             self.dataframe.package_name.str.contains(package, case=False)
         ]
 
-        return self.download_dataframe(dest, file_format, overwrite, df)
+        if df.empty:
+            raise KeyError(f"No matches for requested package '{package}'")
 
-    def download(self, dest: Path, file_format: FileFormat, overwrite: bool) -> int:
+        return self.download_dataframe(dest, file_format, overwrite, df, animated)
+
+    def download(
+        self,
+        dest: Path,
+        file_format: FileFormat,
+        overwrite: bool,
+        animated: bool = True,
+    ) -> int:
         """Download all the textbooks in this catalog to `dest` with format `file_format`.
 
         :param dest: pathlib.path
         :param file_format: springer.constants.FileFormat
         :param overwrite: bool
+        :param animated: bool
         :return: int <bytes written>
         """
-        return self.download_dataframe(dest, file_format, overwrite)
+        return self.download_dataframe(
+            dest, file_format, overwrite, use_progressbar=animated
+        )
+
+    # EJO A formatter object might be a nice way to abstract all the list_* functions.
 
     def list_dataframe(self, dataframe: pandas.DataFrame, long_format: bool) -> None:
         """Displays one line per book described in the source `dataframe`. 
