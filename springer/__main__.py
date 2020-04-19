@@ -1,4 +1,4 @@
-"""Springer Textbook Bulk Downloader
+"""Springer Textbook Bulk Download Tool
 """
 
 import typer
@@ -35,13 +35,14 @@ def main(
         help="Choose a catalog topic.",
     ),
 ):
-    """Springer Textbook Bulk Download Tool
+    """__Springer Textbook Bulk Download Tool__
     
     **NOTICE**:
 
-    Author not affiliated with Springer and this tool is not authorized
-    or supported by Springer. Thank you to Springer for making these
-    high quality textbooks available at no cost. 
+    The author of this software is not affiliated with Springer and this
+    tool is not authorized or supported by Springer. Thank you to
+    Springer for making these high quality textbooks available at no
+    cost.
 
     \b
     >"With the Coronavirus outbreak having an unprecedented impact on
@@ -68,7 +69,7 @@ def main(
 
     `$ python3 -m pip install springer`
 
-    Or the latest from master:
+    Or from the latest source on GitHub:
 
     `$ python3 -m pip install git+https://github.com/JnyJny/springer_downloader`
 
@@ -78,17 +79,12 @@ def main(
     are further subdivided into _packages_ which are books grouped by sub-topics. The
     smallest unit of download is an eBook package.
 
-    The available languages are:
-    \b
-    - English 
-    - German
+    The available languages are: English & German.
 
-    The available topics are:
-    \b
-    - _All Disciplines_, all,
-    - _Emergency Nursing_, med.
+    The available topics are: _All Disciplines_ and _Emergency Nursing_.
 
-    Note: The _Emergency Nursing_ topic is not available in English.
+    **Note: The _Emergency Nursing_ topic is not available in English.**
+
     """
 
     # EJO The callback function is called before any of the command functions
