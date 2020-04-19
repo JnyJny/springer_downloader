@@ -38,6 +38,23 @@ Or the latest from master:
 
 The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
 
+Catalogs are lists of books in a specific _language_, spanning a _topic_. Catalogs
+are further subdivided into _packages_ which are books grouped by subtopics. The
+smallest unit of download currently is a package.
+
+The available languages are:
+
+- English 
+- German
+
+The available topics are:
+
+
+- `All Disciplines`, all,
+- `Emergency Nursing`, med.
+
+Note: The Emergency Nursing topic is not currently available in English.
+
 **Usage**:
 
 ```console
@@ -46,41 +63,43 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-* `-L, --lang [en|de]`: Choose catalog language  [default: en]
-* `-D, --description [all|med]`: Choose a catalog description.  [default: all]
+* `-L, --lang [en|de]`: Choose catalog language
+* `-T, --topic [all|med]`: Choose a catalog topic.
 * `--install-completion`: Install completion for the current shell.
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
 **Commands**:
 
-* `clean`: Removes the cached catalog.
+* `clean-catalog`: Removes cached catalogs.
 * `download`: Download textbooks from Springer.
+* `get-default-catalog`: Print the default catalog identifier.
 * `list`: List books, package, packages, catalog or...
-* `refresh`: Refresh the cached catalog of Springer...
+* `refresh-catalog`: Refresh the cached catalog of springer...
+* `set-default-catalog`: Set default catalog language and topic.
 
-## `springer clean`
+## `springer clean-catalog`
 
-Removes the cached catalog.
+Removes cached catalogs.
 
 Examples
 
-Remove the English language, all disciplines cached catalog:
+Remove the cached default catalog:
 
-`$ springer clean --force`
+`$ springer clean-catalog --force`
 
-Remove the German language emergency nursing cached catalog:
+Remove the cached German language Emergency Nursing catalog:
 
-`$ springer -L de -D med clean --force`
+`$ springer --language de --topic med clean-catalog --force`
 
 Remove all catalogs:
 
-`$ springer clean --force --all`
+`$ springer clean-catalog --force --all`
 
 **Usage**:
 
 ```console
-$ springer clean [OPTIONS]
+$ springer clean-catalog [OPTIONS]
 ```
 
 **Options**:
@@ -100,13 +119,13 @@ directory.
 
 If a download is interrupted, you can re-start the download and it
 will skip over files that have been previously downloaded and pick up
-where it left off. 
+where it left off.
 
 If the --all option is specified, the --dest-path option specifies the
 root directory where files will be stored. Each catalog will save 
 it's textbooks to:
 
-dest_path/language/description/book_file_name.fmt
+dest_path/language/topic/book_file_name.fmt
 
 Files that fail to download will be logged to a file named:
 
@@ -136,7 +155,7 @@ Download books in PDF format to `pdfs` with overwriting:
 
 Download all books in PDF from the German/All_Disciplines catalog:
 
-`$ springer -L de -D all download --dest-path german/all/pdfs`
+`$ springer --language de --topic all download --dest-path german/all/pdfs`
 
 Download all books from all catelogs in epub format:
 
@@ -144,7 +163,7 @@ Download all books from all catelogs in epub format:
 
 Download all books in the 'Computer Science' package in pdf format:
 
-`$ springer download -p Computer`
+`$ springer download --package-name Computer`
 
 **Usage**:
 
@@ -161,9 +180,30 @@ $ springer download [OPTIONS]
 * `--all`: Downloads books from all catalogs.
 * `--help`: Show this message and exit.
 
+## `springer get-default-catalog`
+
+Print the default catalog identifier.
+
+This is the default catalog that will be used when listing books and packages
+and the user has not specified a --language or --topic on the command line.
+
+**Usage**:
+
+```console
+$ springer get-default-catalog [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
 ## `springer list`
 
-List books, package, packages, catalog or catalogs,
+List books, package, packages, catalog or catalogs.
+
+Display information about books, packages, and catalogs. Packages are
+sets of books grouped by subject. There are currently three catalogs
+available: en-all, de-all and de-med.
 
 Examples
 
@@ -177,7 +217,7 @@ List packages available in the default catalog:
 
 List titles available in the German language, all disciplines catalog:
 
-`$ springer --language de --description all list books`
+`$ springer --language de --topic all list books`
 
 List all eBook packages in the default catalog:
 
@@ -193,7 +233,7 @@ List information about the current catalog:
 
 List information about the Germal language, Emergency Nursing catalog:
 
-`$ springer --language de --description med list catalog`
+`$ springer --language de --topic med list catalog`
 
 **Usage**:
 
@@ -207,38 +247,68 @@ $ springer list [OPTIONS] [catalogs|catalog|packages|package|books]
 * `-l, --long-format`: Display selected information in a longer format.  [default: False]
 * `--help`: Show this message and exit.
 
-## `springer refresh`
+## `springer refresh-catalog`
 
-Refresh the cached catalog of Springer textbooks.
+Refresh the cached catalog of springer textbooks.
 
 If --all is specified, the --url option is ignored.
 
 Examples
 
-Update English language catalog:
+Update english language catalog:
 
 `$ springer --language en refresh`
 
-Update German language catalog whose description is 'all':
+Update german language catalog whose topic is 'all':
 
-`$ springer --language de --description all refresh`
+`$ springer --language de --topic all refresh`
 
-Update German language catalog whose description is 'med' with a new URL:
+Update german language catalog whose topic is 'med' with a new url:
 
-`$ springer -L de -D med refresh --url https://example.com/api/endpoint/something/v11`
+`$ springer -l de -d med refresh --url https://example.com/api/endpoint/something/v11`
 
 Update all catalogs:
 
-`$ springer refresh --all`
+`$ springer refresh-catalog --all`
 
 **Usage**:
 
 ```console
-$ springer refresh [OPTIONS]
+$ springer refresh-catalog [OPTIONS]
 ```
 
 **Options**:
 
-* `-u, --url TEXT`: URL for Excel-formatted catalog
+* `-u, --url TEXT`: URL for Excel-formatted catalog.
 * `--all`
+* `--help`: Show this message and exit.
+
+## `springer set-default-catalog`
+
+Set default catalog language and topic.
+
+Examples
+
+Set the default catalog to German language:
+
+`$ springer -L de set-default-catalog`
+
+Set the default catalog to German and emergency nursing:
+
+`$ springer -L de -T med set-default-catalog`
+
+Set the default catalog to English and all disciplines topic:
+
+`$ springer -L en -T all set-default-catalog`
+
+Note: The only English language catalog is en-all.
+
+**Usage**:
+
+```console
+$ springer set-default-catalog [OPTIONS]
+```
+
+**Options**:
+
 * `--help`: Show this message and exit.
