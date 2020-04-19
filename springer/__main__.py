@@ -387,34 +387,45 @@ def download_subcommand(
     `$ springer download --package-name Computer`
     """
 
-    logger.configure(
-        **{
-            "handlers": [
-                {
-                    "sink": dest_path / DOWNLOAD_REPORT,
-                    "format": "{time:YYYY-MM-DD HH:mm} | <red>{message}</>",
-                    "colorize": True,
-                },
-            ]
-        }
-    )
-
     dest_path = dest_path.resolve()
 
-    if not all_catalogs:
-        if package:
-            try:
+    try:
+        logger.configure(
+            **{
+                "handlers": [
+                    {
+                        "sink": dest_path / DOWNLOAD_REPORT,
+                        "format": "{time:YYYY-MM-DD HH:mm} | <red>{message}</>",
+                        "colorize": True,
+                    },
+                ]
+            }
+        )
+        if not all_catalogs:
+            if package:
+                dest_path.mkdir(mode=0o755, exist_ok=True, parents=True)
                 ctx.obj.download_package(package, dest_path, file_format, overwrite)
-            except ValueError as error:
-                typer.secho(str(error), fg="red")
-                raise typer.Exit(-1) from None
+                return
+            ctx.obj.download(dest_path, file_format, overwrite)
             return
-        ctx.obj.download(dest_path, file_format, overwrite)
-        return
 
-    for catalog in Catalog.all_catalogs():
-        dest = dest_path / catalog.language.name / catalog.topic.value
-        if package:
-            catalog.download_package(package, dest_path, file_format, overwrite)
-            continue
-        catalog.download(dest, file_format, overwrite=overwrite)
+        for catalog in Catalog.all_catalogs():
+            dest = dest_path / catalog.language.name / catalog.topic.value
+            dest.mkdir(mode=0o755, exist_ok=True, parents=True)
+            if package:
+                try:
+                    catalog.download_package(package, dest_path, file_format, overwrite)
+                except KeyError as error:
+                    typer.secho(f"{catalog}: ", nl=False)
+                    typer.secho(str(error).replace('"', ""), fg="red")
+                    continue
+            catalog.download(dest, file_format, overwrite=overwrite)
+
+    except KeyError as error:
+        typer.secho(str(error), fg="red")
+        raise typer.Exit(-1) from None
+
+    except PermissionError as error:
+        typer.secho("Permission error for: ", nl=False)
+        typer.secho(str(error.filename), fg="red")
+        raise typer.Exit(-1) from None
