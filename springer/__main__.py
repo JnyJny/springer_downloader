@@ -74,8 +74,8 @@ def main(
     The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
 
     Catalogs are lists of books in a specific _language_, spanning a _topic_. Catalogs
-    are further subdivided into _packages_ which are books grouped by subtopics. The
-    smallest unit of download currently is a package.
+    are further subdivided into _packages_ which are books grouped by sub-topics. The
+    smallest unit of download is an eBook package.
 
     The available languages are:
     \b
@@ -83,12 +83,11 @@ def main(
     - German
 
     The available topics are:
-
     \b
-    - `All Disciplines`, all,
-    - `Emergency Nursing`, med.
+    - _All Disciplines_, all,
+    - _Emergency Nursing_, med.
 
-    Note: The Emergency Nursing topic is not currently available in English.
+    Note: The _Emergency Nursing_ topic is not available in English.
     """
 
     # EJO The callback function is called before any of the command functions
@@ -124,21 +123,21 @@ def get_default_catalog_subcommand():
 def set_default_catalog_subcommand(ctx: typer.Context,):
     """Set default catalog language and topic.
 
-    Examples
+    __Examples__
     
     Set the default catalog to German language:
 
-    `$ springer -L de set-default-catalog`
+    `$ springer --language de set-default-catalog`
 
     Set the default catalog to German and emergency nursing:
 
-    `$ springer -L de -T med set-default-catalog`
+    `$ springer --language de --topic med set-default-catalog`
 
     Set the default catalog to English and all disciplines topic:
 
-    `$ springer -L en -T all set-default-catalog`
+    `$ springer --language en --topic all set-default-catalog`
 
-    Note: The only English language catalog is en-all.
+    Note: The only English language catalog is `en-all`.
     """
     prev = Catalog(fetch=False)
     ctx.obj.save_defaults()
@@ -162,11 +161,11 @@ def list_subcommand(
 ):
     """List books, package, packages, catalog or catalogs.
 
-    Display information about books, packages, and catalogs. Packages are
-    sets of books grouped by subject. There are currently three catalogs
-    available: en-all, de-all and de-med.
+    Display information about books, packages, and catalogs. Packages
+    are sets of books grouped by subject. There are catalogs available:
+    `en-all`, `de-all` and `de-med`.
 
-    Examples
+    __Examples__
     
     List titles available in the default catalog:
 
@@ -195,7 +194,6 @@ def list_subcommand(
     List information about the Germal language, Emergency Nursing catalog:
 
     `$ springer --language de --topic med list catalog`
-
     """
 
     if component == Component.Books:
@@ -236,9 +234,9 @@ def refresh_subcommand(
 ):
     """Refresh the cached catalog of springer textbooks.
 
-    If --all is specified, the --url option is ignored.
+    If `--all` is specified, the `--url` option is ignored.
 
-    Examples
+    __Examples__
 
     Update english language catalog:
 
@@ -276,7 +274,7 @@ def clean_subcommand(
 ):
     """Removes cached catalogs.
 
-    Examples
+    __Examples__
 
     Remove the cached default catalog:
 
@@ -346,17 +344,17 @@ def download_subcommand(
     root directory where files will be stored. Each catalog will save 
     it's textbooks to:
     
-    dest_path/language/topic/book_file_name.fmt
+    `dest_path/language/topic/book_file_name.fmt`
 
     Files that fail to download will be logged to a file named:
 
-    dest_path/DOWNLOAD_ERRORS.txt
+    `dest_path/DOWNLOAD_ERRORS.txt`
     
     The log entries will have the date and time of the attempt,
     the HTTP status code and the URL that was attempted.
 
 
-    EXAMPLES
+    __Examples__
 
     Download all books in PDF format to the current directory:
     
@@ -384,7 +382,7 @@ def download_subcommand(
 
     Download all books in the 'Computer Science' package in pdf format:
 
-    `$ springer download --package-name Computer`
+    `$ springer download --package-name computer`
     """
 
     dest_path = dest_path.resolve()
