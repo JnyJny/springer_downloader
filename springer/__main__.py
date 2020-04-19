@@ -140,12 +140,10 @@ def set_default_catalog_subcommand(ctx: typer.Context,):
 
     Note: The only English language catalog is en-all.
     """
-    default = Catalog(fetch=False)
+    prev = Catalog(fetch=False)
     ctx.obj.save_defaults()
-    typer.secho(
-        f"Old Default: {default}", fg="red" if default.name == ctx.obj.name else "blue"
-    )
-    typer.secho(f"New Default: {Catalog(fetch=False)}", fg="green")
+    typer.secho(f"Old Default: {prev!s}", fg="red" if prev.is_default else "blue")
+    typer.secho(f"New Default: {Catalog(fetch=False)!s}", fg="green")
 
 
 @cli.command(name="list")
