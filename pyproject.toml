@@ -17,6 +17,7 @@ xlrd = "^1.2.0"
 requests = "^2.23.0"
 typer = "^0.1.1"
 loguru = "^0.4.1"
+asciinema = "^2.0.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.1"
@@ -24,6 +25,7 @@ typer = "^0.1.1"
 black = "^19.10b0"
 typer-cli = "^0.0.8"
 termtosvg = "^1.1.0"
+asciinema = "^2.0.2"
 
 [build-system]
 requires = ["poetry>=0.12"]
