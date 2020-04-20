@@ -1,6 +1,9 @@
+
 # `springer`
 
 __Springer Textbook Bulk Download Tool__
+
+[![asciicast](https://asciinema.org/a/HeZxzAXaY3whvATnF467bjWSO.svg)](https://asciinema.org/a/HeZxzAXaY3whvATnF467bjWSO)
 
 **NOTICE**:
 
