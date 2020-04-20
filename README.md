@@ -3,8 +3,6 @@
 
 __Springer Textbook Bulk Download Tool__
 
-[![asciicast](https://asciinema.org/a/HeZxzAXaY3whvATnF467bjWSO.svg)](https://asciinema.org/a/HeZxzAXaY3whvATnF467bjWSO)
-
 **NOTICE**:
 
 The author of this software is not affiliated with Springer and this
