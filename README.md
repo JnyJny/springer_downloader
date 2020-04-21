@@ -1,4 +1,4 @@
-![Sweet Download Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/b.gif)
+![Sweet Download Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
 # `springer`
 
 __Springer Textbook Bulk Download Tool__
