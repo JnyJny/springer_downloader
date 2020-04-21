@@ -2,7 +2,7 @@
 *.epub
 dist/*
 *.egg-info/*
-DOWNLOAD_ERRORS.txt
+DOWNLOAD_REPORT.txt
 tst.py
 *.cast
 .DS_Store
