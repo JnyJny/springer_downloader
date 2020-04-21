@@ -312,7 +312,7 @@ class Catalog:
     def textbooks(self, dataframe: pandas.DataFrame = None) -> tuple:
         """This generator function returns a namedtuple for each row in `dataframe`.
 
-        If `dataframe` is got supplied, `self.dataframe` is used. 
+        If `dataframe` is got supplied, `self.dataframe` is used.
 
         :param dataframe: pandas.DataFrame
         :return: generator returning namedtuples called 'TextBook'
@@ -324,10 +324,13 @@ class Catalog:
         for textbook in dataframe.itertuples(index=None, name="Textbook"):
             yield textbook
 
-    def download_book(
+    def download_textbook(
         self, textbook: tuple, dest: Path, file_format: FileFormat, overwrite: bool,
     ) -> int:
         """Download `textbook` to `dest` with format `file_format`.
+
+        Textbook is a Pandas.itertuple generated namedtuple based on
+        the row in a dataframe.
 
         If destination path does not currently exist, it will be
         created.
@@ -357,6 +360,10 @@ class Catalog:
         :param file_format: springer.constants.FileFormat
         :param overwrite: bool
         :return: int <bytes written>
+
+        Raises:
+        - ValueError for missing Textbook attributes
+
         """
 
         path = (dest / textbook.filename).with_suffix(file_format.suffix)
@@ -381,10 +388,10 @@ class Catalog:
                     fp.write(chunk)
             return size
         except KeyboardInterrupt:
-            # The user has aborted the download and we don't want to leave a
-            # partially downloaded file to upset them later. Remove the
-            # partial file, issue a log entry with the aborted path and
-            # re-raise the exception.
+            # EJO The user has aborted the download and we don't want to leave
+            #     a partially downloaded file to upset them later. Remove the
+            #     partial file, issue a log entry with the aborted path and
+            #     re-raise the exception.
             path.unlink()
             logger.debug(f"User aborted, removed partial file: {path}")
             raise
@@ -395,17 +402,46 @@ class Catalog:
         file_format: FileFormat,
         overwrite: bool,
         dataframe: pandas.DataFrame = None,
-        use_progressbar: bool = True,
+        animated: bool = False,
     ) -> int:
         """Downloads all the textbooks in `dataframe` to `dest` with format `file_format`.
-
-        The download is animated using a `typer.progressbar` if `use_progrssbar` is True.
 
         :param dest: pathlib.path
         :param file_format: springer.constants.FileFormat
         :param overwrite: bool
         :param dataframe: pandas.DataFrame
-        :param use_progressbar: bool
+        :return: <bytes written>
+        """
+
+        if dataframe is None:
+            dataframe = self.dataframe
+
+        if len(dataframe) > 1 or animated:
+            return self.download_dataframe_animated(
+                dest, file_format, overwrite, dataframe
+            )
+
+        total = 0
+        for textbook in self.textbooks(dataframe):
+            total += self.download_textbook(
+                textbook, dest, file_format, overwrite=overwrite
+            )
+
+        return total
+
+    def download_dataframe_animated(
+        self,
+        dest: Path,
+        file_format: FileFormat,
+        overwrite: bool,
+        dataframe: pandas.DataFrame = None,
+    ) -> int:
+        """Downloads all the textbooks in `dataframe` to `dest` with format `file_format`.
+
+        :param dest: pathlib.path
+        :param file_format: springer.constants.FileFormat
+        :param overwrite: bool
+        :param dataframe: pandas.DataFrame
         :return: int <bytes written>
         """
 
@@ -414,8 +450,8 @@ class Catalog:
 
         def show_title(item):
             if not item:
-                return f"Downloaded to {dest}"
-            return item.title[:40]
+                return None
+            return item.title[:30]
 
         with typer.progressbar(
             self.textbooks(dataframe),
@@ -427,23 +463,36 @@ class Catalog:
             empty_char=Token.Empty,
             fill_char=Token.Book,
             item_show_func=show_title,
-            file=sys.stdout if use_progressbar else None,
         ) as workitems:
+            total = 0
             for textbook in workitems:
-                total = 0
-                for textbook in workitems:
-                    total += self.download_book(
-                        textbook, dest, file_format, overwrite=overwrite
-                    )
+                total += self.download_textbook(
+                    textbook, dest, file_format, overwrite=overwrite
+                )
             return total
 
+    def download_title(self, title: str, dest: Path, file_format, overwrite: bool):
+
+        """Download all the textbooks matching `title` to `dest` with format `file_format`.
+
+        :param title: str
+        :param dest: pathlib.path
+        :param file_format: springer.constants.FileFormat
+        :param overwrite: bool
+        :return: int <bytes written>
+
+        Raises KeyError if the requested title does not match any textbook titles.
+        """
+
+        df = self.dataframe[self.dataframe.title.str.contains(title, case=False)]
+
+        if df.empty:
+            raise KeyError(f"No matches for requested title '{title}'")
+
+        return self.download_dataframe(dest, file_format, overwrite, df)
+
     def download_package(
-        self,
-        package: str,
-        dest: Path,
-        file_format: FileFormat,
-        overwrite: bool,
-        animated: bool = True,
+        self, package: str, dest: Path, file_format: FileFormat, overwrite: bool,
     ) -> int:
         """Download all the textbooks in `package` to `dest` with format `file_format`.
 
@@ -451,10 +500,9 @@ class Catalog:
         :param dest: pathlib.path
         :param file_format: springer.constants.FileFormat
         :param overwrite: bool
-        :param animated: bool
         :return: int <bytes written>
 
-        Raises KeyError if the requested package does not match any package.
+        Raises KeyError if the requested package does not match any package names.
         """
 
         df = self.dataframe[
@@ -464,26 +512,17 @@ class Catalog:
         if df.empty:
             raise KeyError(f"No matches for requested package '{package}'")
 
-        return self.download_dataframe(dest, file_format, overwrite, df, animated)
+        return self.download_dataframe(dest, file_format, overwrite, df)
 
-    def download(
-        self,
-        dest: Path,
-        file_format: FileFormat,
-        overwrite: bool,
-        animated: bool = True,
-    ) -> int:
+    def download(self, dest: Path, file_format: FileFormat, overwrite: bool,) -> int:
         """Download all the textbooks in this catalog to `dest` with format `file_format`.
 
         :param dest: pathlib.path
         :param file_format: springer.constants.FileFormat
         :param overwrite: bool
-        :param animated: bool
         :return: int <bytes written>
         """
-        return self.download_dataframe(
-            dest, file_format, overwrite, use_progressbar=animated
-        )
+        return self.download_dataframe(dest, file_format, overwrite)
 
     # EJO A formatter object might be a nice way to abstract all the list_* functions.
 

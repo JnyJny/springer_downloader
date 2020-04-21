@@ -12,7 +12,7 @@ from .catalog import Catalog
 
 cli = typer.Typer()
 
-DOWNLOAD_REPORT = "DOWNLOAD_ERRORS.txt"
+DOWNLOAD_REPORT = "DOWNLOAD_REPORT.txt"
 
 
 @cli.callback()
@@ -35,7 +35,12 @@ def main(
         help="Choose a catalog topic.",
     ),
 ):
-    """__Springer Textbook Bulk Download Tool__
+    """
+
+    ![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/b.gif)
+
+    ![Longer Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
+    __Springer Textbook Bulk Download Tool__
     
     **NOTICE**:
 
@@ -76,15 +81,17 @@ def main(
     The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
 
     Catalogs are lists of books in a specific _language_, spanning a _topic_. Catalogs
-    are further subdivided into _packages_ which are books grouped by sub-topics. The
-    smallest unit of download is an eBook package.
+    are further subdivided into _packages_ which are books grouped by sub-topics.
+    
+    Textbooks can be downloaded by; specific title, titles belonging
+    to eBook packages or all textbooks in a catalog. Titles and package names can be
+    incompletely specified and will download the best matches.
 
     The available languages are: English & German.
 
     The available topics are: _All Disciplines_ and _Emergency Nursing_.
 
     **Note: The _Emergency Nursing_ topic is not available in English.**
-
     """
 
     # EJO The callback function is called before any of the command functions
@@ -302,6 +309,9 @@ def clean_subcommand(
 @cli.command(name="download")
 def download_subcommand(
     ctx: typer.Context,
+    title: str = typer.Option(
+        None, "--book-title", "-t", help="Book title to match (partial title OK)"
+    ),
     package: str = typer.Option(
         None, "--package-name", "-p", help="Package name to match (partial name OK)."
     ),
@@ -338,19 +348,18 @@ def download_subcommand(
     will skip over files that have been previously downloaded and pick up
     where it left off.
 
+    
+
     If the --all option is specified, the --dest-path option specifies the
     root directory where files will be stored. Each catalog will save 
     it's textbooks to:
     
     `dest_path/language/topic/book_file_name.fmt`
 
-    Files that fail to download will be logged to a file named:
+    Errors encountered during the download will be logged to a file named:
 
-    `dest_path/DOWNLOAD_ERRORS.txt`
+    `dest_path/DOWNLOAD_REPORT.txt`
     
-    The log entries will have the date and time of the attempt,
-    the HTTP status code and the URL that was attempted.
-
 
     __Examples__
 
@@ -383,6 +392,15 @@ def download_subcommand(
     `$ springer download --package-name computer`
     """
 
+    # EJO Revamp invocation to match the list_subcommand ??
+    #
+    #     springer download catalog -d dest
+    #     springer download catalogs -d dest
+    #     springer download package -d dest -m package_re
+    #     springer download packages -d dest
+    #     springer download book -d dest -m book_re
+    #     springer download books -d dest
+
     dest_path = dest_path.resolve()
 
     try:
@@ -398,23 +416,42 @@ def download_subcommand(
             }
         )
         if not all_catalogs:
+
+            dest_path.mkdir(mode=0o755, exist_ok=True, parents=True)
+
+            if title:
+                ctx.obj.download_title(title, dest_path, file_format, overwrite)
+                return
+
             if package:
-                dest_path.mkdir(mode=0o755, exist_ok=True, parents=True)
                 ctx.obj.download_package(package, dest_path, file_format, overwrite)
                 return
+
             ctx.obj.download(dest_path, file_format, overwrite)
             return
 
         for catalog in Catalog.all_catalogs():
             dest = dest_path / catalog.language.name / catalog.topic.value
             dest.mkdir(mode=0o755, exist_ok=True, parents=True)
+            # EJO KeyError is caught in this loop since we are iterating on
+            #     all the catalogs and a failure in one catalog shouldn't stop
+            #     the show.
+            if title:
+                try:
+                    catalog.download_title(title, dest_path, file_format, overwrite)
+                except KeyError as error:
+                    typer.secho(f"{catalog}: ", nl=False)
+                    typer.secho(str(error).strip('"'), fg="red")
+                    continue
+
             if package:
                 try:
                     catalog.download_package(package, dest_path, file_format, overwrite)
                 except KeyError as error:
                     typer.secho(f"{catalog}: ", nl=False)
-                    typer.secho(str(error).replace('"', ""), fg="red")
+                    typer.secho(str(error).strip('"'), fg="red")
                     continue
+
             catalog.download(dest, file_format, overwrite=overwrite)
 
     except KeyError as error:

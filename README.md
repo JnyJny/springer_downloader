@@ -1,7 +1,8 @@
-![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/b.gif)
-![Sweet Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
 # `springer`
 
+![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/b.gif)
+
+![Longer Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
 __Springer Textbook Bulk Download Tool__
 
 **NOTICE**:
@@ -43,8 +44,11 @@ Or from the latest source on GitHub:
 The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
 
 Catalogs are lists of books in a specific _language_, spanning a _topic_. Catalogs
-are further subdivided into _packages_ which are books grouped by sub-topics. The
-smallest unit of download is an eBook package.
+are further subdivided into _packages_ which are books grouped by sub-topics.
+
+Textbooks can be downloaded by; specific title, titles belonging
+to eBook packages or all textbooks in a catalog. Titles and package names can be
+incompletely specified and will download the best matches.
 
 The available languages are: English & German.
 
@@ -118,18 +122,17 @@ If a download is interrupted, you can re-start the download and it
 will skip over files that have been previously downloaded and pick up
 where it left off.
 
+
+
 If the --all option is specified, the --dest-path option specifies the
 root directory where files will be stored. Each catalog will save 
 it's textbooks to:
 
 `dest_path/language/topic/book_file_name.fmt`
 
-Files that fail to download will be logged to a file named:
+Errors encountered during the download will be logged to a file named:
 
-`dest_path/DOWNLOAD_ERRORS.txt`
-
-The log entries will have the date and time of the attempt,
-the HTTP status code and the URL that was attempted.
+`dest_path/DOWNLOAD_REPORT.txt`
 
 
 __Examples__
@@ -170,6 +173,7 @@ $ springer download [OPTIONS]
 
 **Options**:
 
+* `-t, --book-title TEXT`: Book title to match (partial title OK)
 * `-p, --package-name TEXT`: Package name to match (partial name OK).
 * `-f, --format [pdf|epub]`: [default: pdf]
 * `-d, --dest-path PATH`: Destination directory for downloaded files.  [default: /Users/ejo/local/springer]
