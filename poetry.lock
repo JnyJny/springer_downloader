@@ -7,7 +7,7 @@ python-versions = "*"
 version = "1.4.3"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Terminal session recorder"
 name = "asciinema"
 optional = false
@@ -340,7 +340,7 @@ wcwidth = "*"
 dev = ["coverage", "pylint", "twine", "wheel"]
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Python Library for Tom's Obvious, Minimal Language"
 name = "toml"
 optional = false
@@ -440,7 +440,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "3f432c5abef525cc63c7d0133769c6760e2009191d3c238936097b72224d3f56"
+content-hash = "291aa0215970b2bebc47f57bcd31fe232b295b323807421ccd776e869fc70d1a"
 python-versions = "^3.7"
 
 [metadata.files]

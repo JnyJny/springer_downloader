@@ -17,7 +17,7 @@ xlrd = "^1.2.0"
 requests = "^2.23.0"
 typer = "^0.1.1"
 loguru = "^0.4.1"
-asciinema = "^2.0.2"
+toml = "^0.10.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.1"
