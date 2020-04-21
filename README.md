@@ -5,7 +5,7 @@
 ![Longer Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
 __Springer Textbook Bulk Download Tool__
 
-##NOTICE:
+## NOTICE
 
 The author of this software is not affiliated with Springer and this
 tool is not authorized or supported by Springer. Thank you to
@@ -29,9 +29,25 @@ cost.
 
 [Source](https://www.springernature.com/gp/librarians/news-events/all-news-articles/industry-news-initiatives/free-access-to-textbooks-for-institutions-affected-by-coronaviru/17855960)
 
-This tool automates the tasks of downloading the Springer provided
-Excel-formatted catalogs and downloading the files described in the
-catalog.
+## Overview
+
+This tool automates the process of downloading the Springer-provided
+Excel catalogs, locating URLs and downloading the files in PDF or epub
+format.
+
+Catalogs are lists of books in a specific _language_, spanning a
+_topic_. Catalogs are further subdivided into _packages_ which are
+books grouped by sub-topics.
+
+Textbooks can be downloaded by; title, package name or the entire
+catalog. Title and package names can be incompletely specified and
+are case-insensitive. 
+
+The available languages are: English & German.
+
+The available topics are: _All Disciplines_ and _Emergency Nursing_.
+
+**Note: The _Emergency Nursing_ topic is not available in English.**
 
 ## Installation
 
@@ -44,31 +60,6 @@ Or from the latest source on GitHub:
 `$ python3 -m pip install git+https://github.com/JnyJny/springer_downloader`
 
 The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
-
-## Overview
-
-Catalogs are lists of books in a specific _language_, spanning a _topic_. Catalogs
-are further subdivided into _packages_ which are books grouped by sub-topics.
-
-Textbooks can be downloaded by; specific title, titles belonging
-to eBook packages or all textbooks in a catalog. Titles and package names can be
-incompletely specified and will download the best matches.
-
-The available languages are: English & German.
-
-The available topics are: _All Disciplines_ and _Emergency Nursing_.
-
-**Note: The _Emergency Nursing_ topic is not available in English.**
-
-## Subcommands
-
-
-- [`springer get-default-catalog`](#springer-get-default-catalog)
-- [`springer set-default-catalog`](#springer-set-default-catalog)
-- [`springer list`](#springer-list)
-- [`springer download`](#springer-download)
-- [`springer clean-catalog`](#springer-clean-catalog)
-- [`springer refresh-catalog`](#springer-refresh-catalog)
 
 **Usage**:
 
