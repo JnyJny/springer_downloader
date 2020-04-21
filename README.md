@@ -56,6 +56,15 @@ The available topics are: _All Disciplines_ and _Emergency Nursing_.
 
 **Note: The _Emergency Nursing_ topic is not available in English.**
 
+Subcommands:
+
+- spring [get-default-catalog](#springer-get-default-catalog)
+- spring [set-default-catalog](#springer-set-default-catalog)
+- spring [list](#springer-list)
+- spring [download](#springer-download)
+- spring [clean-catalog](#springer-clean-catalog)
+- spring [refresh-catalog](#springer-refresh-catalog)
+
 **Usage**:
 
 ```console
