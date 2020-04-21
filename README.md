@@ -12,7 +12,7 @@ tool is not authorized or supported by Springer. Thank you to
 Springer for making these high quality textbooks available at no
 cost.
 
-
+
 >"With the Coronavirus outbreak having an unprecedented impact on
 >education, Springer Nature is launching a global program to support
 >learning and teaching at higher education institutions
@@ -62,7 +62,7 @@ The available topics are: _All Disciplines_ and _Emergency Nursing_.
 
 ## Subcommands
 
-
+
 - [`springer get-default-catalog`](#springer-get-default-catalog)
 - [`springer set-default-catalog`](#springer-set-default-catalog)
 - [`springer list`](#springer-list)
