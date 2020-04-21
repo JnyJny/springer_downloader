@@ -75,5 +75,5 @@ demo:
 
 
 clean:
-	@/bin/rm -rf *.pdf *.epub DOWNLOAD_ERRORS.txt *.cast
+	@/bin/rm -rf *.pdf *.epub DOWNLOAD_REPORT.txt *.cast
 	@make -C demo clean
