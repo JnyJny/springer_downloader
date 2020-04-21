@@ -27,6 +27,7 @@ all:
 
 README.md:
 	typer $(TARGET).__main__ utils docs --name $(TARGET) --output $@
+	sed -i '' -e  "s///g" $@
 
 MAJOR:
 	@poetry version major
