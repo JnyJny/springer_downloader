@@ -5,7 +5,7 @@
 ![Longer Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
 __Springer Textbook Bulk Download Tool__
 
-**NOTICE**:
+##NOTICE:
 
 The author of this software is not affiliated with Springer and this
 tool is not authorized or supported by Springer. Thank you to
@@ -33,6 +33,8 @@ This tool automates the tasks of downloading the Springer provided
 Excel-formatted catalogs and downloading the files described in the
 catalog.
 
+## Installation
+
 This utility can be installed using `pip`:
 
 `$ python3 -m pip install springer`
@@ -42,6 +44,8 @@ Or from the latest source on GitHub:
 `$ python3 -m pip install git+https://github.com/JnyJny/springer_downloader`
 
 The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
+
+## Overview
 
 Catalogs are lists of books in a specific _language_, spanning a _topic_. Catalogs
 are further subdivided into _packages_ which are books grouped by sub-topics.
@@ -56,7 +60,8 @@ The available topics are: _All Disciplines_ and _Emergency Nursing_.
 
 **Note: The _Emergency Nursing_ topic is not available in English.**
 
-Subcommands:
+## Subcommands
+
 
 - [`springer get-default-catalog`](#springer-get-default-catalog)
 - [`springer set-default-catalog`](#springer-set-default-catalog)
