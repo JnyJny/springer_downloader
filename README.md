@@ -58,12 +58,12 @@ The available topics are: _All Disciplines_ and _Emergency Nursing_.
 
 Subcommands:
 
-- spring [get-default-catalog](#springer-get-default-catalog)
-- spring [set-default-catalog](#springer-set-default-catalog)
-- spring [list](#springer-list)
-- spring [download](#springer-download)
-- spring [clean-catalog](#springer-clean-catalog)
-- spring [refresh-catalog](#springer-refresh-catalog)
+- [`springer get-default-catalog`](#springer-get-default-catalog)
+- [`springer set-default-catalog`](#springer-set-default-catalog)
+- [`springer list`](#springer-list)
+- [`springer download`](#springer-download)
+- [`springer clean-catalog`](#springer-clean-catalog)
+- [`springer refresh-catalog`](#springer-refresh-catalog)
 
 **Usage**:
 
