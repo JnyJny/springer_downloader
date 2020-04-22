@@ -28,36 +28,24 @@ if __name__ == "__main__":
 
     for arg in argv[1:]:
         for c in arg.strip().split(";"):
+            c = c.strip()
             if not len(c):
                 continue
             cmds.append(c)
 
-    sleep(1)
+    if not cmds[-1].startswith("exit"):
+        cmds.append("exit")
+
     for cmd in cmds:
+        try:
+            sleep(float(cmd))
+            continue
+        except ValueError:
+            sleep(0.5)
+
         # echo the command to stdout with
         # a random cadence
         for c in cmd:
             print(c, sep="", end="", flush=True)
             sleep(random() / 5)
         print(flush=True)
-
-        # execute the same command with
-        # cwd = /tmp to avoid echoing the
-        # next command before the current
-        # one is finished in the screen recorder.
-        #
-        # Should do some timing of the subprocess
-        # and do a logrithmic backoff (short
-        # runtimes have a short idle, long
-        # runtimes have a much longer idle to
-        # take into account jitter in longer
-        # running commands (eg. download)
-
-        results = subprocess.run(
-            cmd.split(),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            cwd="/tmp",
-        )
-
-        sleep(60)
