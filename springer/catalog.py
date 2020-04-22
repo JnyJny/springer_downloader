@@ -450,8 +450,8 @@ class Catalog:
 
         def show_title(item):
             if not item:
-                return None
-            return item.title[:30]
+                return "Downloaded to {dest}"
+            return item.title[:20]
 
         with typer.progressbar(
             self.textbooks(dataframe),
