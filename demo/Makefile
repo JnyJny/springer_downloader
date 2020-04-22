@@ -46,28 +46,36 @@ LIST_PACKAGES_SCRIPT=springer list packages;1;
 LIST_PACKAGES_LONG_SCRIPT=springer list packages -l;2;
 
 LIST_BOOKS_SCRIPT=springer list books;2;
-LIST_BOOKS_LONG_SCRIPT=springer list books -l;3;
+LIST_BOOKS_LONG_SCRIPT=springer list books -n 'A Beginners Guide to Python 3 Programming' -l;1;
 
 DOWNLOAD_CATALOG_SCRIPT=springer download catalog;1200;
 DOWNLOAD_PACKAGE_SCRIPT=springer download package -n 'Computer Science';300;
 DOWNLOAD_BOOKS_SCRIPT=springer download books -n python;240;
+
+LONG_DEMO_SCRIPT= springer get-default-catalog;1;
+LONG_DEMO_SCRIPT+= springer list catalog;1;
+LONG_DEMO_SCRIPT+= springer list packages;1;
+LONG_DEMO_SCRIPT+= springer list packages -n 'Computer Science' -l;2;
+LONG_DEMO_SCRIPT+= springer download books -n 'python' -f epub -d epubs ;240;
 
 all: $(GIFS)
 
 get-default-catalog.cast:
 	@$(call PLAY,$(GET_DEFAULT_CATALOG_SCRIPT)) | $(call RECORD,$@)
 
-get-default-catalog.gif: get-default-catalog.cast
-	@$(CAST2GIF) $(C2GFLAGS) -h 5 $< $@
+get-default-catalog.gif: get-default-catalog.cast clean_fast
+	$(call SPEEDUP,0.5,$<)
+	@$(CAST2GIF) $(C2GFLAGS) -h 3 $<.fast $@
 
 set-default-catalog.cast: 
 	@springer -L en -T all set-default-catalog > /dev/null
 	@$(call PLAY,$(SET_DEFAULT_CATALOG_SCRIPT)) | $(call RECORD,$@)
 	@springer -L en -T all set-default-catalog > /dev/null
 
-set-default-catalog.gif: set-default-catalog.cast
+set-default-catalog.gif: set-default-catalog.cast clean_fast
+	$(call SPEEDUP,0.5,$<)
 	@springer -L en -T all set-default-catalog
-	@$(CAST2GIF) $(C2GFLAGS) -h 13 $< $@
+	@$(CAST2GIF) $(C2GFLAGS) -h 13 $<.fast $@
 
 list-catalog.cast:
 	@$(call PLAY,$(LIST_CATALOG_SCRIPT)) | $(call RECORD,$@)
@@ -85,56 +93,60 @@ list-packages.cast:
 	@$(call PLAY,$(LIST_PACKAGES_SCRIPT)) | $(call RECORD,$@)
 
 list-packages.gif: list-packages.cast
-	@$(CAST2GIF) $(C2GFLAGS) -h 24 $< $@
+	@$(CAST2GIF) $(C2GFLAGS) -h 23 $< $@
 
 list-packages-long.cast:
 	@$(call PLAY,$(LIST_PACKAGES_LONG_SCRIPT)) | $(call RECORD,$@)
 
 list-packages-long.gif: list-packages-long.cast
-	@$(CAST2GIF) $(C2GFLAGS) -h 24 $< $@
+	@$(CAST2GIF) $(C2GFLAGS) -h 10 $< $@
 
 list-books.cast:
 	@$(call PLAY,$(LIST_BOOKS_SCRIPT)) | $(call RECORD,$@)
 
 list-books.gif: list-books.cast
-	@$(CAST2GIF) $(C2GFLAGS) -h 24 $< $@
+	@$(CAST2GIF) $(C2GFLAGS) -h 10 $< $@
 
 list-books-long.cast:
 	@$(call PLAY,$(LIST_BOOKS_LONG_SCRIPT)) | $(call RECORD,$@)
 
 list-books-long.gif: list-books-long.cast
-	@$(CAST2GIF) $(C2GFLAGS) -h 24 $< $@
+	@$(CAST2GIF) $(C2GFLAGS) -h 22 $< $@
 
 download-catalog.cast:
 	@$(call PLAY,$(DOWNLOAD_CATALOG_SCRIPT)) | $(call RECORD,$@)
 
-download-catalog.gif: download-catalog.cast
-	@rm -f $<.fast
-	$(call SPEEDUP,20,$<)
-	@$(CAST2GIF) $(C2GFLAGS) -h 4 $<.fast $@
+download-catalog.gif: download-catalog.cast clean_fast
+	$(call SPEEDUP,10,$<)
+	@$(CAST2GIF) $(C2GFLAGS) -h 2 $<.fast $@
 
 download-package.cast:
 	@$(call PLAY,$(DOWNLOAD_PACKAGE_SCRIPT)) | $(call RECORD,$@)
 
-download-package.gif: download-package.cast
-	@rm -f $<.fast
+download-package.gif: download-package.cast clean_fast
 	$(call SPEEDUP,10,$<)
-	@$(CAST2GIF) $(C2GFLAGS) -h 4 $<.fast $@
+	@$(CAST2GIF) $(C2GFLAGS) -h 2 $<.fast $@
 
 download-books.cast:
 	@$(call PLAY,$(DOWNLOAD_BOOKS_SCRIPT)) | $(call RECORD,$@)
 
-download-books.gif: download-books.cast
-	@rm -f $<.fast
-	$(call SPEEDUP,10,$<)
-	@$(CAST2GIF) $(C2GFLAGS) -h 4 $<.fast $@
+download-books.gif: download-books.cast clean_fast
+	$(call SPEEDUP,1,$<)
+	@$(CAST2GIF) $(C2GFLAGS) -h 2 $<.fast $@
 
+long-demo.cast:
+	@$(call PLAY,$(LONG_DEMO_SCRIPT)) | $(call RECORD,$@)
 
+long-demo.gif: long-demo.cast clean_fast
+	$(call SPEEDUP,1,$<)
+	@$(CAST2GIF) $(C2GFLAGS) -h 10 $<.fast $@
 
-clean:
-	@/bin/rm -f  *.pdf *.epub DOWNLOAD_REPORT.txt $(CASTS)
+clean_fast:
+	@/bin/rm -f *.fast
+
+clean: clean_fast
+	@/bin/rm -rf  *.pdf *.epub DOWNLOAD_REPORT.txt Computer_Science epubs
 
 immaculate: clean
-	@/bin/rm -f $(GIFS)
+	@/bin/rm -f $(CASTS) $(GIFS)
 
-# SNAIL: function snail() { awk -v s="${1:-'0.3'}" 'system("sleep " s) {exit} 1' }
