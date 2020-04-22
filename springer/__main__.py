@@ -36,8 +36,6 @@ def main(
     ),
 ):
     """![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/download-catalog.gif)
-
-    ![Longer Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
     __Springer Textbook Bulk Download Tool__
     
     ## NOTICE
@@ -162,7 +160,9 @@ def set_default_catalog_subcommand(ctx: typer.Context,):
 def list_subcommand(
     ctx: typer.Context,
     component: Component,
-    match: str = typer.Option(None, "--match", "-m", help="String used for matching."),
+    name: str = typer.Option(
+        None, "--name", "-n", help="Name to match against title or pacakge."
+    ),
     long_format: bool = typer.Option(
         False,
         "--long-format",
@@ -209,15 +209,14 @@ def list_subcommand(
     """
 
     if component == Component.Books:
-
-        ctx.obj.list_textbooks(long_format, match)
+        ctx.obj.list_textbooks(long_format, name)
         return
 
     if component is Component.Package:
-        if match:
-            for name, package in ctx.obj.packages.items():
-                if match.casefold() in name.casefold():
-                    ctx.obj.list_package(name, package, long_format)
+        if name:
+            for pkgname, pkginfo in ctx.obj.packages.items():
+                if name.casefold() in pkgname.casefold():
+                    ctx.obj.list_package(pkgname, pkginfo, long_format)
             return
         else:
             component = Component.Packages
@@ -339,7 +338,9 @@ def _configure_logger(path: Path, logfile: str = None) -> None:
 def download_subcommand(
     ctx: typer.Context,
     component: Component,
-    name: str = typer.Option(None, "--name", "-n", help=""),
+    name: str = typer.Option(
+        None, "--name", "-n", help="Name to match against title or package."
+    ),
     dest_path: Path = typer.Option(
         Path.cwd(),
         "--dest-path",

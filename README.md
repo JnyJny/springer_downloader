@@ -1,8 +1,6 @@
 # `springer`
 
 ![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/download-catalog.gif)
-
-![Longer Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
 __Springer Textbook Bulk Download Tool__
 
 ## NOTICE
@@ -190,7 +188,7 @@ $ springer download [OPTIONS] [catalogs|catalog|packages|package|books]
 
 **Options**:
 
-* `-n, --name TEXT`
+* `-n, --name TEXT`: Name to match against title or package.
 * `-d, --dest-path PATH`: Destination directory for downloaded files.  [default: /Users/ejo/local/springer]
 * `-f, --format [pdf|epub]`: [default: pdf]
 * `-W, --over-write`: Over write downloaded files.  [default: False]
@@ -258,7 +256,7 @@ $ springer list [OPTIONS] [catalogs|catalog|packages|package|books]
 
 **Options**:
 
-* `-m, --match TEXT`: String used for matching.
+* `-n, --name TEXT`: Name to match against title or pacakge.
 * `-l, --long-format`: Display selected information in a longer format.  [default: False]
 * `--help`: Show this message and exit.
 
