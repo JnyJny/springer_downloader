@@ -426,7 +426,6 @@ class Catalog:
             total += self.download_textbook(
                 textbook, dest, file_format, overwrite=overwrite
             )
-
         return total
 
     def download_dataframe_animated(
@@ -450,7 +449,7 @@ class Catalog:
 
         def show_title(item):
             if not item:
-                return "Downloaded to {dest}"
+                return f"Downloaded to {dest}"
             return item.title[:20]
 
         with typer.progressbar(
