@@ -17,9 +17,24 @@ This a hack.
 
 import subprocess
 
-from random import random
+from random import random, choice
 from sys import argv
 from time import sleep
+from string import printable
+
+
+def delayed_echo(v) -> None:
+    """
+    """
+    print(v, sep="", end="", flush=True)
+    sleep(random() / 3)
+
+
+def do_typo():
+    """
+    """
+    delayed_echo(choice(printable))
+    delayed_echo("")
 
 
 if __name__ == "__main__":
@@ -37,15 +52,17 @@ if __name__ == "__main__":
         cmds.append("exit")
 
     for cmd in cmds:
+
         try:
             sleep(float(cmd))
             continue
         except ValueError:
-            sleep(0.5)
+            sleep(0.2)
 
-        # echo the command to stdout with
-        # a random cadence
+        # echo the command to stdout with a random cadence
+
         for c in cmd:
-            print(c, sep="", end="", flush=True)
-            sleep(random() / 5)
+            if random() <= 0.05:
+                do_typo()
+            delayed_echo(c)
         print(flush=True)
