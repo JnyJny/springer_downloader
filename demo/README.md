@@ -1,6 +1,6 @@
 ## Springer Subcommand Demonstrations
 
-- ![download-books](download-books)
+- ![download-books](https://github.com/JnyJny/springer_downloader/raw/master/demo/download-books.gif)
 - ![download-catalog](download-catalog)	
 - ![download-package](download-package)	
 - ![get-default-catalog](get-default-catalog)
@@ -14,7 +14,7 @@
 - ![set-default-catalog](set-default-catalog)
 
 
-[download-books]:https://github.com/JnyJny/springer_downloader/raw/master/demo/download-books.gif
+[download-books]:
 [download-catalog]:https://github.com/JnyJny/springer_downloader/raw/master/demo/download-catalog.gif
 [download-package]:https://github.com/JnyJny/springer_downloader/raw/master/demo/download-package.gif
 [get-default-catalog]:https://github.com/JnyJny/springer_downloader/raw/master/demo/get-default-catalog.gif
