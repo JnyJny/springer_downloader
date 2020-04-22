@@ -20,7 +20,7 @@ def main(
     ctx: typer.Context,
     language: Language = typer.Option(
         None,
-        "--lang",
+        "--language",
         "-L",
         show_choices=True,
         show_default=True,
@@ -35,14 +35,12 @@ def main(
         help="Choose a catalog topic.",
     ),
 ):
-    """
-
-    ![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/b.gif)
+    """![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/b.gif)
 
     ![Longer Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
     __Springer Textbook Bulk Download Tool__
     
-    **NOTICE**:
+    ## NOTICE
 
     The author of this software is not affiliated with Springer and this
     tool is not authorized or supported by Springer. Thank you to
@@ -65,10 +63,28 @@ def main(
     >will be available via SpringerLink until at least the end of July."
 
     [Source](https://www.springernature.com/gp/librarians/news-events/all-news-articles/industry-news-initiatives/free-access-to-textbooks-for-institutions-affected-by-coronaviru/17855960)
+
+    ## Overview
+
+    This tool automates the process of downloading the Springer-provided
+    Excel catalogs, locating URLs and downloading the files in PDF or epub
+    format.
+
+    Catalogs are lists of books in a specific _language_, spanning a
+    _topic_. Catalogs are further subdivided into _packages_ which are
+    books grouped by sub-topics.
     
-    This tool automates the tasks of downloading the Springer provided
-    Excel-formatted catalogs and downloading the files described in the
-    catalog.
+    Textbooks can be downloaded by; title, package name or the entire
+    catalog. Title and package names can be incompletely specified and
+    are case-insensitive. 
+
+    The available languages are: English & German.
+
+    The available topics are: _All Disciplines_ and _Emergency Nursing_.
+
+    **Note: The _Emergency Nursing_ topic is not available in English.**
+
+    ## Installation
 
     This utility can be installed using `pip`:
 
@@ -79,19 +95,6 @@ def main(
     `$ python3 -m pip install git+https://github.com/JnyJny/springer_downloader`
 
     The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
-
-    Catalogs are lists of books in a specific _language_, spanning a _topic_. Catalogs
-    are further subdivided into _packages_ which are books grouped by sub-topics.
-    
-    Textbooks can be downloaded by; specific title, titles belonging
-    to eBook packages or all textbooks in a catalog. Titles and package names can be
-    incompletely specified and will download the best matches.
-
-    The available languages are: English & German.
-
-    The available topics are: _All Disciplines_ and _Emergency Nursing_.
-
-    **Note: The _Emergency Nursing_ topic is not available in English.**
     """
 
     # EJO The callback function is called before any of the command functions
@@ -306,7 +309,27 @@ def clean_subcommand(
         catalog.cache_file.unlink()
 
 
-@cli.command(name="download")
+def _configure_logger(path: Path, logfile: str = None) -> None:
+    """Adds `path` / `logfile` to the logger configuration.
+
+    Makes sure that the path exists (including parents)
+    and enables logging to the specified file located in that
+    directory.
+
+    :param path: pathlib.Path
+    :param logfile: str 
+
+    """
+
+    logfile = logfile or DOWNLOAD_REPORT
+
+    logfmt = "{time:YYYY-MM-DD HH:mm} | <red>{message}</>"
+    logger.configure(
+        **{"handlers": [{"sink": path / logfile, "format": logfmt, "colorize": True,},]}
+    )
+
+
+@cli.command(name="xxx-download")
 def download_subcommand(
     ctx: typer.Context,
     title: str = typer.Option(
@@ -392,29 +415,11 @@ def download_subcommand(
     `$ springer download --package-name computer`
     """
 
-    # EJO Revamp invocation to match the list_subcommand ??
-    #
-    #     springer download catalog -d dest
-    #     springer download catalogs -d dest
-    #     springer download package -d dest -m package_re
-    #     springer download packages -d dest
-    #     springer download book -d dest -m book_re
-    #     springer download books -d dest
-
     dest_path = dest_path.resolve()
 
+    _configure_logger(dest_path)
+
     try:
-        logger.configure(
-            **{
-                "handlers": [
-                    {
-                        "sink": dest_path / DOWNLOAD_REPORT,
-                        "format": "{time:YYYY-MM-DD HH:mm} | <red>{message}</>",
-                        "colorize": True,
-                    },
-                ]
-            }
-        )
         if not all_catalogs:
 
             dest_path.mkdir(mode=0o755, exist_ok=True, parents=True)
@@ -442,7 +447,7 @@ def download_subcommand(
                 except KeyError as error:
                     typer.secho(f"{catalog}: ", nl=False)
                     typer.secho(str(error).strip('"'), fg="red")
-                    continue
+                continue
 
             if package:
                 try:
@@ -450,9 +455,86 @@ def download_subcommand(
                 except KeyError as error:
                     typer.secho(f"{catalog}: ", nl=False)
                     typer.secho(str(error).strip('"'), fg="red")
-                    continue
+                continue
 
             catalog.download(dest, file_format, overwrite=overwrite)
+
+    except KeyError as error:
+        typer.secho(str(error), fg="red")
+        raise typer.Exit(-1) from None
+
+    except PermissionError as error:
+        typer.secho("Permission error for: ", nl=False)
+        typer.secho(str(error.filename), fg="red")
+        raise typer.Exit(-1) from None
+
+
+@cli.command("download")
+def download2_subcommand(
+    ctx: typer.Context,
+    component: Component,
+    name: str = typer.Option(None, "--name", "-n", help=""),
+    dest_path: Path = typer.Option(
+        Path.cwd(),
+        "--dest-path",
+        "-d",
+        show_default=True,
+        help="Destination directory for downloaded files.",
+    ),
+    file_format: FileFormat = typer.Option(
+        FileFormat.pdf, "--format", "-f", show_default=True, show_choices=True,
+    ),
+    overwrite: bool = typer.Option(
+        False,
+        "--over-write",
+        "-W",
+        is_flag=True,
+        show_default=True,
+        help="Over write downloaded files.",
+    ),
+):
+
+    dest_path = dest_path.resolve()
+
+    dest_path.mkdir(mode=0o755, exist_ok=True, parents=True)
+
+    _configure_logger(dest_path)
+
+    try:
+        if component in [Component.Books, Component.Catalog]:
+            if not name:
+                ctx.obj.download(dest_path, file_format, overwrite)
+            else:
+                ctx.obj.download_title(name, dest_path, file_format, overwrite)
+            return
+
+        if component in [Component.Package, Component.Packages]:
+
+            if component is Component.Package:
+                if not name:
+                    typer.secho(f"Please supply a `name` for package", fg="red")
+                    raise typer.Exit(-1)
+                package_names = [name]
+            else:
+                package_names = ctx.obj.packages.keys()
+
+            for pkgname in package_names:
+                path = dest_path / pkgname.casefold().replace(" ", "_")
+                path.mkdir(mode=0o755, exist_ok=True, parents=True)
+                ctx.obj.download_package(pkgname, path, file_format, overwrite)
+            return
+
+        if component is Component.Catalogs:
+
+            for catalog in Catalog.all_catalogs():
+
+                path = dest_path / catalog.language / catalog.topic
+                path.mkdir(mode=0o755, exist_ok=True, parents=True)
+                try:
+                    catalog.download(path, file_format, overwrite)
+                except KeyError as error:
+                    typer.secho(str(error), fg="red")
+                    continue
 
     except KeyError as error:
         typer.secho(str(error), fg="red")
