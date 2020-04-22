@@ -1,6 +1,6 @@
 # `springer`
 
-![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/b.gif)
+![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/download-catalog.gif)
 
 ![Longer Demo](https://github.com/JnyJny/springer_downloader/raw/master/demo/demo1_fast.gif)
 __Springer Textbook Bulk Download Tool__
@@ -49,6 +49,14 @@ The available topics are: _All Disciplines_ and _Emergency Nursing_.
 
 **Note: The _Emergency Nursing_ topic is not available in English.**
 
+## Source and License
+
+Full source is available on
+[GitHub](https://github.com/JnyJny/springer_downloader) and it is
+licensed under the
+[Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+license.
+
 ## Installation
 
 This utility can be installed using `pip`:
@@ -59,8 +67,6 @@ Or from the latest source on GitHub:
 
 `$ python3 -m pip install git+https://github.com/JnyJny/springer_downloader`
 
-The source is available on [GitHub](https://github.com/JnyJny/springer_downloader).
-
 **Usage**:
 
 ```console
@@ -69,7 +75,7 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-* `-L, --lang [en|de]`: Choose catalog language
+* `-L, --language [en|de]`: Choose catalog language
 * `-T, --topic [all|med]`: Choose a catalog topic.
 * `--install-completion`: Install completion for the current shell.
 * `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
@@ -78,7 +84,7 @@ $ springer [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `clean-catalog`: Remove cached catalogs.
-* `download`: Download textbooks from Springer.
+* `download`: Download textbooks from Springer This command...
 * `get-default-catalog`: Print the default catalog identifier.
 * `list`: List books, package, packages, catalog or...
 * `refresh-catalog`: Refresh the cached catalog of springer...
@@ -116,74 +122,78 @@ $ springer clean-catalog [OPTIONS]
 
 ## `springer download`
 
-Download textbooks from Springer.
+Download textbooks from Springer
 
-This command will download all the textbooks found in the catalog
-of free textbooks provided by Springer. The default file format 
-is PDF and the files are saved by default to the current working
-directory.
+This command downloads textbooks from Springer to the local host. Files
+are saved by default in PDF format to the current working directory.
 
-If a download is interrupted, you can re-start the download and it
-will skip over files that have been previously downloaded and pick up
-where it left off.
+If a download is interrupted by the user, it can be later restarted where
+the interruption occurred without downloading previous files. 
 
+Problems encountered while downloading files are logged to:
 
-
-If the --all option is specified, the --dest-path option specifies the
-root directory where files will be stored. Each catalog will save 
-it's textbooks to:
-
-`dest_path/language/topic/book_file_name.fmt`
-
-Errors encountered during the download will be logged to a file named:
-
-`dest_path/DOWNLOAD_REPORT.txt`
-
+`dest-path/DOWNLOAD_REPORT.txt`
 
 __Examples__
 
-Download all books in PDF format to the current directory:
+Download all books in the default catalog in PDF format to the
+current directory:
 
-`$ springer download`
+`$ springer download books`
 
-Download all books in EPUB format to the current directory:
+Download all books in EPUB format whose title includes 'python':
 
-`$ springer download --format epub`
+`$ springer download books --name python --file-format epub`
 
-Download all books in PDF format to a directory `pdfs`:
+Download all books into directories grouped by package:
 
-`$ springer download --dest-path pdfs`
+`$ springer download packages --dest-path by_pkgs
 
-Download books in PDF format to `pdfs` with overwriting:
+Download all books in a specific package in EPUB format:
 
-`$ springer download --dest-path pdfs --over-write`
+`$ springer download package --name 'Computer Science' --file-format epub`
 
-Download all books in PDF from the German/All_Disciplines catalog:
+Download all books in packages whose name includes `Science`:
 
-`$ springer --language de --topic all download --dest-path german/all/pdfs`
+`$ springer download package --name science --dest sciences`
 
-Download all books from all catelogs in epub format:
+Download all books in all catalogs [en-all, de-all, de-med] in EPUB format:
 
-`$ springer download --all --format epub`
+`$ springer download catalogs --file-format epub`
 
-Download all books in the 'Computer Science' package in pdf format:
+The `catalogs` download subcommand will create a set of directories by language
+and topic for each catalog and save downloaded files into the appropriate
+directory, eg:
 
-`$ springer download --package-name computer`
+
+dest-path/English/All_Disciplines/package_name/title.fmt
+dest-path/German/All_Disciplines/package_name/title.fmt
+dest-path/German/Emergency_Nursing/package_name/title.fmt
+
+The `package` and `packages` subcommands will also save downloaded
+files into directories with package names rooted in the destination
+path:
+
+
+dest-path/package_name/title.fmt
+...
+
+
+
+See Also: `set-default-catalog`, `get-default-catalog`, `list`
 
 **Usage**:
 
 ```console
-$ springer download [OPTIONS]
+$ springer download [OPTIONS] [catalogs|catalog|packages|package|books]
 ```
 
 **Options**:
 
-* `-t, --book-title TEXT`: Book title to match (partial title OK)
-* `-p, --package-name TEXT`: Package name to match (partial name OK).
-* `-f, --format [pdf|epub]`: [default: pdf]
+* `-n, --name TEXT`
 * `-d, --dest-path PATH`: Destination directory for downloaded files.  [default: /Users/ejo/local/springer]
+* `-f, --format [pdf|epub]`: [default: pdf]
 * `-W, --over-write`: Over write downloaded files.  [default: False]
-* `--all`: Downloads books from all catalogs.
 * `--help`: Show this message and exit.
 
 ## `springer get-default-catalog`
