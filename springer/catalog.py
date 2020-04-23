@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .constants import FileFormat, Language, Topic, Token
 
-from . import _urls
+from .urls import urls as DEFAULT_URLS
 
 # XXX remove typer
 
@@ -110,7 +110,7 @@ class Catalog:
         except AttributeError:
             pass
 
-        self._url = _urls["catalogs"][self.language][self.topic]
+        self._url = DEFAULT_URLS["catalogs"][self.language][self.topic]
 
         return self._url
 
