@@ -45,6 +45,9 @@ LIST_CATALOG_LONG_SCRIPT=springer list catalog -l;2;
 LIST_PACKAGES_SCRIPT=springer list packages;1;
 LIST_PACKAGES_LONG_SCRIPT=springer list packages -l;2;
 
+LIST_PACAKGE_SCRIPT=springer list package -n science;1;
+LIST_PACAKGE_LONG_SCRIPT=springer list package -n 'Economics and Finance' -l;1;
+
 LIST_BOOKS_SCRIPT=springer list books;2;
 LIST_BOOKS_LONG_SCRIPT=springer list books -n 'A Beginners Guide to Python 3 Programming' -l;1;
 
@@ -75,13 +78,14 @@ set-default-catalog.cast:
 set-default-catalog.gif: set-default-catalog.cast clean_fast
 	$(call SPEEDUP,0.5,$<)
 	@springer -L en -T all set-default-catalog
-	@$(CAST2GIF) $(C2GFLAGS) -h 13 $<.fast $@
+	@$(CAST2GIF) $(C2GFLAGS) -h 12 $<.fast $@
 
 list-catalog.cast:
 	@$(call PLAY,$(LIST_CATALOG_SCRIPT)) | $(call RECORD,$@)
 
-list-catalog.gif: list-catalog.cast
-	@$(CAST2GIF) $(C2GFLAGS) -h 6 $< $@
+list-catalog.gif: list-catalog.cast clean_fast
+	$(call SPEEDUP,0.5,$<)
+	@$(CAST2GIF) $(C2GFLAGS) -h 6 $<.fast $@
 
 list-catalog-long.cast:
 	@$(call PLAY,$(LIST_CATALOG_LONG_SCRIPT)) | $(call RECORD,$@)
@@ -92,13 +96,27 @@ list-catalog-long.gif: list-catalog-long.cast
 list-packages.cast:
 	@$(call PLAY,$(LIST_PACKAGES_SCRIPT)) | $(call RECORD,$@)
 
-list-packages.gif: list-packages.cast
-	@$(CAST2GIF) $(C2GFLAGS) -h 23 $< $@
+list-packages.gif: list-packages.cast clean_fast
+	$(call SPEEDUp,0.5,$<)
+	@$(CAST2GIF) $(C2GFLAGS) -h 23 $<.fast $@
 
 list-packages-long.cast:
 	@$(call PLAY,$(LIST_PACKAGES_LONG_SCRIPT)) | $(call RECORD,$@)
 
 list-packages-long.gif: list-packages-long.cast
+	@$(CAST2GIF) $(C2GFLAGS) -h 10 $< $@
+
+list-package.cast:
+	@$(call PLAY,$(LIST_PACKAGE_SCRIPT)) | $(call RECORD,$@)
+
+list-package.gif: list-package.cast clean_fast
+	$(call SPEEDUp,0.5,$<)
+	@$(CAST2GIF) $(C2GFLAGS) -h 23 $<.fast $@
+
+list-package-long.cast:
+	@$(call PLAY,$(LIST_PACKAGE_LONG_SCRIPT)) | $(call RECORD,$@)
+
+list-package-long.gif: list-package-long.cast
 	@$(CAST2GIF) $(C2GFLAGS) -h 10 $< $@
 
 list-books.cast:
@@ -111,7 +129,7 @@ list-books-long.cast:
 	@$(call PLAY,$(LIST_BOOKS_LONG_SCRIPT)) | $(call RECORD,$@)
 
 list-books-long.gif: list-books-long.cast
-	@$(CAST2GIF) $(C2GFLAGS) -h 22 $< $@
+	@$(CAST2GIF) $(C2GFLAGS) -h 23 $< $@
 
 download-catalog.cast:
 	@$(call PLAY,$(DOWNLOAD_CATALOG_SCRIPT)) | $(call RECORD,$@)
@@ -137,9 +155,8 @@ download-books.gif: download-books.cast clean_fast
 long-demo.cast:
 	@$(call PLAY,$(LONG_DEMO_SCRIPT)) | $(call RECORD,$@)
 
-long-demo.gif: long-demo.cast clean_fast
-	$(call SPEEDUP,1,$<)
-	@$(CAST2GIF) $(C2GFLAGS) -h 10 $<.fast $@
+long-demo.gif: long-demo.cast
+	@$(CAST2GIF) $(C2GFLAGS) -h 20  $@
 
 clean_fast:
 	@/bin/rm -f *.fast
