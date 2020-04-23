@@ -1,6 +1,6 @@
 # `springer`
 
-![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/download-catalog.gif)
+![Downloading](https://github.com/JnyJny/springer_downloader/raw/master/demo/animations/download-catalog.gif)
 __Springer Textbook Bulk Download Tool__
 
 ## NOTICE
