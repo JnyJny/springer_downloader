@@ -148,9 +148,8 @@ download-package.gif: download-package.cast clean_fast
 download-books.cast:
 	@$(call PLAY,$(DOWNLOAD_BOOKS_SCRIPT)) | $(call RECORD,$@)
 
-download-books.gif: download-books.cast clean_fast
-	$(call SPEEDUP,1,$<)
-	@$(CAST2GIF) $(C2GFLAGS) -h 2 $<.fast $@
+download-books.gif: download-books.cast
+	@$(CAST2GIF) $(C2GFLAGS) -h 2 $< $@
 
 long-demo.cast:
 	@$(call PLAY,$(LONG_DEMO_SCRIPT)) | $(call RECORD,$@)
