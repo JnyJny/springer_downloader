@@ -5,12 +5,13 @@ import pytest
 
 from springer.constants import FileFormat
 from springer.constants import Language
-from springer.constants import Category
+from springer.constants import Topic
+from springer.constants import Component
 
 from enum import Enum
 
 
-@pytest.mark.parametrize("constant_class", [FileFormat, Language, Category])
+@pytest.mark.parametrize("constant_class", [FileFormat, Language, Topic, Component])
 def test_constant_class_issubclass_enum(constant_class):
     assert issubclass(constant_class, Enum)
 
@@ -31,9 +32,18 @@ def test_language_constants():
     assert Language.German.value == "de"
 
 
-def test_category_constants():
+def test_topic_constants():
 
-    assert Category.AllDisciplines.name == "AllDisciplines"
-    assert Category.AllDisciplines.value == "all"
-    assert Category.EmergencyNursing.name == "EmergencyNursing"
-    assert Category.EmergencyNursing.value == "med"
+    assert Topic.All_Disciplines.name == "All_Disciplines"
+    assert Topic.All_Disciplines.value == "all"
+    assert Topic.Emergency_Nursing.name == "Emergency_Nursing"
+    assert Topic.Emergency_Nursing.value == "med"
+
+
+def test_component_constants():
+
+    assert Component.Books == "books"
+    assert Component.Packages == "packages"
+    assert Component.Package == "package"
+    assert Component.Catalog == "catalog"
+    assert Component.Catalogs == "catalogs"

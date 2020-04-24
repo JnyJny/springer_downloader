@@ -7,7 +7,7 @@ from pathlib import Path
 from pandas import DataFrame
 
 from springer.catalog import Catalog
-from springer.constants import Language, Category
+from springer.constants import Language, Topic
 
 
 @pytest.fixture(scope="module")
@@ -25,9 +25,9 @@ def test_creating_catalog_no_args():
 @pytest.mark.parametrize(
     "lang,cat",
     [
-        (Language.English, Category.AllDisciplines),
-        (Language.German, Category.AllDisciplines),
-        (Language.German, Category.EmergencyNursing),
+        (Language.English, Topic.All_Disciplines),
+        (Language.German, Topic.All_Disciplines),
+        (Language.German, Topic.Emergency_Nursing),
     ],
 )
 def test_creating_catalog_with_args_xpass(lang, cat):
@@ -36,11 +36,11 @@ def test_creating_catalog_with_args_xpass(lang, cat):
     assert catalog
     assert isinstance(catalog, Catalog)
     assert catalog.language == lang
-    assert catalog.category == cat
+    assert catalog.topic == cat
 
 
 @pytest.mark.parametrize(
-    "lang,cat", [(Language.English, Category.EmergencyNursing),],
+    "lang,cat", [(Language.English, Topic.Emergency_Nursing),],
 )
 def test_creating_catalog_with_args_xfail(lang, cat):
 
@@ -52,9 +52,9 @@ def test_creating_catalog_with_args_xfail(lang, cat):
     "prop_name,prop_type",
     [
         ("language", Language),
-        ("category", Category),
+        ("topic", Topic),
         ("url", str),
-        ("app_dir", Path),
+        ("config_dir", Path),
         ("cache_file", Path),
         ("dataframe", DataFrame),
     ],
