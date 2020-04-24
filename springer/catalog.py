@@ -96,14 +96,22 @@ class Catalog:
         # but can slow down this method if the catalog hasn't been cached
         # locally yet.
 
-        return Catalog(fetch=False).name == self.name
+        return Catalog(fetch=False) == self
+
+    def __eq__(self, other):
+        """Catalogs are equivalent if they have the same name."""
+        try:
+            return self.name == other.name
+        except AttributeError:
+            pass
+        return False
 
     @property
     def url(self) -> str:
-        """The URL hosting the Excel-formated file for this catalog.
+        """The URL location of the Excel-formatted file for this catalog.
 
-        Accessing URL can raise KeyError for language/topic combinations
-        which do not exist.
+        Accessing this URL can raise KeyError for language/topic
+        combinations which do not exist.
         """
         try:
             return self._url
@@ -115,7 +123,7 @@ class Catalog:
         return self._url
 
     def content_url(self, uid: str, file_format: FileFormat) -> str:
-        """The content download URL for `uid` with `file_format`.
+        """The content download URL for textbook `uid` with `file_format`.
         
         :param uid: str
         :param file_format: springer.constants.FileFormat
@@ -125,7 +133,7 @@ class Catalog:
 
     @property
     def config_dir(self) -> Path:
-        """The pathlib.Path for the application-specific configuration directory.
+        """A pathlib.Path for the application-specific configuration directory.
 
         Configuration files and cached catalog CSV files are kept here.
         """
@@ -172,7 +180,7 @@ class Catalog:
 
     @property
     def cache_file(self) -> Path:
-        """pathlib.Path for the locally cached catalog in CSV format.
+        """A pathlib.Path for the locally cached catalog in CSV format.
         """
         try:
             return self._cache_file
@@ -185,7 +193,10 @@ class Catalog:
 
     @property
     def ttable(self) -> dict:
-        """
+        """Dictionary result of str.maketrans() for use with str.translate().
+
+        This table collapses punctuation to empty strings and whitespace
+        to an underscore.
         """
         try:
             return self._ttable
@@ -205,16 +216,19 @@ class Catalog:
     def dataframe(self) -> pandas.DataFrame:
         """A pandas.DataFrame populated with the contents of the Springer free textbook catalog.
 
-        The dataframe source data is the cached CSV-formatted file
-        `cache_file` and we transform the cached data everytime we
+        The dataframe's source data is the cached CSV-formatted file
+        self.`cache_file` and we transform the cached data everytime we
         construct the dataframe rather than applying it to the cached
         file. This seemed simpler for handling cached catalog updates.
 
         The source data is modified to make it easier to work with:
 
         - Empty rows are dropped
-        - Column names are lower-cased and embedded spaces replaced with underscores.
-        - Columns added: uid, package_name, title, filename
+        - Column names are casefolded and embedded spaces replaced with underscores.
+        - Column names replaced:
+          o english_package_name|german_package_name -> package_name
+          o book_title -> title
+        - Columns added: uid, filename
         - Columns removed: "Unnamed: 0" if present
 
         Finally, the dataframe is sorted by title and author in
@@ -236,28 +250,30 @@ class Catalog:
         except KeyError:
             pass
 
-        # Normalize column names to make them easier to use. In this case,
-        # it means replacing embedded spaces with underscores and lower
-        # casing the resultant string. The column names should then be
-        # valid python identifiers which makes the dataframe easier to use.
+        # Normalize column names to make them easier to use. In this case, it
+        # means replacing embedded spaces with underscores and casefolding the
+        # resultant string. The column names should then be valid python
+        # identifiers which makes the dataframe easier to use.
 
-        columns = [c.lower().translate(self.ttable) for c in df.columns]
+        columns = {c: c.casefold().translate(self.ttable) for c in df.columns}
 
-        book_title = columns.index("book_title")
-        columns.insert(book_title, "title")
-        columns.remove("book_title")
+        # later on, textbook.book_title looks funny
+        columns["Book Title"] = "title"
 
-        df.columns = columns
+        df.rename(columns, axis=1, inplace=True)
 
-        # German language catalogs have 'German Package Name' and 'English
-        # Package Name' columns where the English column is empty. To make
-        # things easier later on, I created a new column 'package_name' and
-        # populate it with the appropriate language specific package name.
+        # German language catalogs have 'german_package_name' and 'english
+        # package_name' columns where the English column is empty. Again, to
+        # make things easier later on, I conditionally rename
+        # 'german_package_name' or 'english_package_name' to 'package_name' and
+        # drop any unused package name columns.
 
         if "german_package_name" in df.columns:
-            df["package_name"] = df["german_package_name"]
+            pkg_rename = {"german_package_name": "package_name"}
+            df.drop(columns="english_package_name", inplace=True)
         else:
-            df["package_name"] = df["english_package_name"]
+            pkg_rename = {"english_package_name": "package_name"}
+        df.rename(pkg_rename, axis=1, inplace=True)
 
         # UID = unique identifier in content download URL
         df["uid"] = df.doi_url.apply(lambda v: "/".join(v.split("/")[-2:]))
@@ -285,7 +301,7 @@ class Catalog:
         
         Keys are in sorted order.
 
-        Note: please do not mutate the package dataframes.
+        Note: Do not mutate the package dataframes unless you copy them.
         """
         try:
             return self._packages
