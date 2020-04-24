@@ -164,9 +164,9 @@ and topic for each catalog and save downloaded files into the appropriate
 directory, eg:
 
 
-dest-path/English/All_Disciplines/package_name/title.fmt
-dest-path/German/All_Disciplines/package_name/title.fmt
-dest-path/German/Emergency_Nursing/package_name/title.fmt
+- dest-path/English/All_Disciplines/package_name/title.fmt
+- dest-path/German/All_Disciplines/package_name/title.fmt
+- dest-path/German/Emergency_Nursing/package_name/title.fmt
 
 The `package` and `packages` subcommands will also save downloaded
 files into directories with package names rooted in the destination
