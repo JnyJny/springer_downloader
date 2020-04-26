@@ -14,10 +14,7 @@ from time import sleep
 from pathlib import Path
 
 from .constants import FileFormat, Language, Topic, Token
-
 from .urls import urls as DEFAULT_URLS
-
-# XXX remove typer
 
 
 class Catalog:
@@ -260,7 +257,7 @@ class Catalog:
         # later on, textbook.book_title looks funny
         columns["Book Title"] = "title"
 
-        df.rename(columns, axis=1, inplace=True)
+        df.rename(columns=columns, inplace=True)
 
         # German language catalogs have 'german_package_name' and 'english
         # package_name' columns where the English column is empty. Again, to
@@ -273,7 +270,8 @@ class Catalog:
             df.drop(columns="english_package_name", inplace=True)
         else:
             pkg_rename = {"english_package_name": "package_name"}
-        df.rename(pkg_rename, axis=1, inplace=True)
+
+        df.rename(columns=pkg_rename, inplace=True)
 
         # UID = unique identifier in content download URL
         df["uid"] = df.doi_url.apply(lambda v: "/".join(v.split("/")[-2:]))
@@ -487,7 +485,6 @@ class Catalog:
             return total
 
     def download_title(self, title: str, dest: Path, file_format, overwrite: bool):
-
         """Download all the textbooks matching `title` to `dest` with format `file_format`.
 
         :param title: str
