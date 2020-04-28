@@ -126,7 +126,7 @@ class Catalog:
         :param file_format: springer.constants.FileFormat
         :return: str
         """
-        return _urls["content"][file_format] + f"/{uid}.{file_format}"
+        return DEFAULT_URLS["content"][file_format] + f"/{uid}.{file_format}"
 
     @property
     def config_dir(self) -> Path:
