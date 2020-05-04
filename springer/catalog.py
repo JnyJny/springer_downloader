@@ -1,6 +1,7 @@
 """the Springer Free Textbook Catalog
 """
 
+import asyncio
 import pandas
 import toml
 import typer
@@ -10,7 +11,7 @@ import sys
 
 from itertools import product
 from loguru import logger
-from time import sleep
+from time import sleep, time
 from pathlib import Path
 
 from .constants import FileFormat, Language, Topic, Token
@@ -46,7 +47,7 @@ class Catalog:
                 pass
 
     def __init__(
-        self, language: Language = None, topic: Topic = None, fetch: bool = True
+        self, language: Language = None, topic: Topic = None, fetch: bool = True,
     ):
         """
         :param language: springer.constants.Language
@@ -400,6 +401,7 @@ class Catalog:
                 for chunk in response.iter_content(chunk_size=8192):
                     size += len(chunk)
                     fp.write(chunk)
+            logger.info(f"{textbook.title} -> {path}")
             return size
         except KeyboardInterrupt:
             # EJO The user has aborted the download and we don't want to leave

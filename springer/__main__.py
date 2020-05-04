@@ -1,6 +1,7 @@
 """Springer Textbook Bulk Download Tool
 """
 
+import asyncio
 import typer
 
 from loguru import logger
@@ -460,6 +461,82 @@ def download_subcommand(
                     path = dest_path / pkgname.replace(" ", "_")
                     path.mkdir(mode=0o755, exist_ok=True, parents=True)
                     catalog.download_package(pkgname, path, file_format, overwrite)
+
+    except KeyError as error:
+        typer.secho(str(error), fg="red")
+        raise typer.Exit(-1) from None
+
+    except PermissionError as error:
+        typer.secho("Permission error for: ", nl=False)
+        typer.secho(str(error.filename), fg="red")
+        raise typer.Exit(-1) from None
+
+
+@cli.command("download-all")
+def download_async_subcommand(
+    ctx: typer.Context,
+    dest_path: Path = typer.Option(
+        Path.cwd(),
+        "--dest-path",
+        "-d",
+        show_default=True,
+        help="Destination directory for downloaded files.",
+    ),
+    file_format: FileFormat = typer.Option(
+        FileFormat.pdf, "--format", "-f", show_default=True, show_choices=True,
+    ),
+    overwrite: bool = typer.Option(
+        False,
+        "--over-write",
+        "-W",
+        is_flag=True,
+        show_default=True,
+        help="Over write downloaded files.",
+    ),
+):
+    """Download all textbooks from a Springer catalog
+
+    """
+
+    dest_path = dest_path.resolve()
+
+    dest_path.mkdir(mode=0o755, exist_ok=True, parents=True)
+
+    _configure_logger(dest_path)
+
+    async def download_task(name, catalog, queue):
+
+        logger.debug(f"task {name} starting")
+        while True:
+            job = await queue.get()
+            logger.debug(f"{name} {job}")
+            catalog.download_textbook(*job)
+            queue.task_done()
+
+    async def download_catalog_async(
+        catalog, dest: Path, file_format: FileFormat, overwrite: bool
+    ) -> int:
+
+        queue = asyncio.Queue()
+
+        for textbook in catalog.textbooks():
+            job = (textbook, dest, file_format, overwrite)
+            queue.put_nowait(job)
+
+        tasks = []
+        for i in range(3):
+            task = asyncio.create_task(download_task(f"dlworker-{i}", catalog, queue))
+            tasks.append(task)
+
+        await queue.join()
+
+        for task in tasks:
+            task.cancel()
+
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+    try:
+        asyncio.run(download_catalog_async(ctx.obj, dest_path, file_format, overwrite))
 
     except KeyError as error:
         typer.secho(str(error), fg="red")
