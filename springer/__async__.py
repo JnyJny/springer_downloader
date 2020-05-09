@@ -47,6 +47,7 @@ def fetch(taskid, session, url, path):
                     fp.write(chunk)
         except KeyboardInterrupt:
             path.unlink()
+            raise
         except Exception as error:
             print(f"{error} -> url")
     return url
