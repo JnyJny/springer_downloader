@@ -141,7 +141,7 @@ current directory:
 
 Download all books in EPUB format whose title includes 'python':
 
-`$ springer download books --name python --file-format epub`
+`$ springer download books --name python --format epub`
 
 Download all books into directories grouped by package:
 
@@ -149,7 +149,7 @@ Download all books into directories grouped by package:
 
 Download all books in a specific package in EPUB format:
 
-`$ springer download package --name 'Computer Science' --file-format epub`
+`$ springer download package --name 'Computer Science' --format epub`
 
 Download all books in packages whose name includes `Science`:
 
@@ -157,7 +157,7 @@ Download all books in packages whose name includes `Science`:
 
 Download all books in all catalogs [en-all, de-all, de-med] in EPUB format:
 
-`$ springer download catalogs --file-format epub`
+`$ springer download catalogs --format epub`
 
 The `catalogs` download subcommand will create a set of directories by language
 and topic for each catalog and save downloaded files into the appropriate
