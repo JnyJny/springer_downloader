@@ -8,8 +8,8 @@ SPRINGER_ANNOUNCEMENT_URL = "https://www.springernature.com/gp/librarians/news-e
 
 SPRINGER_REST_URL = "https://resource-cms.springernature.com/springer-cms/rest"
 
-SPRINGER_CATALOG_EN_URL = f"{SPRINGER_REST_URL}/v1/content/17858272/data/v5"
-SPRINGER_CATALOG_DE_URL = f"{SPRINGER_REST_URL}/v1/content/17863240/data/v2"
+SPRINGER_CATALOG_EN_URL = f"{SPRINGER_REST_URL}/v1/content/17858272/data/v6"
+SPRINGER_CATALOG_DE_URL = f"{SPRINGER_REST_URL}/v1/content/17863240/data/v3"
 SPRINGER_NURSING_CATALOG_DE_URL = f"{SPRINGER_REST_URL}/v1/content/17856246/data/v3"
 
 SPRINGER_PDF_URL = "https://link.springer.com/content/pdf"
