@@ -240,7 +240,7 @@ class Catalog:
         if not self.cache_file.exists():
             self.fetch_catalog()
 
-        df = pandas.read_csv(self.cache_file).dropna(axis=1)
+        df = pandas.read_csv(self.cache_file).dropna(axis=1, how="all")
 
         try:
             df.drop(columns="Unnamed: 0", inplace=True)
@@ -274,7 +274,7 @@ class Catalog:
         df.rename(columns=pkg_rename, inplace=True)
 
         # UID = unique identifier in content download URL
-        df["uid"] = df.doi_url.apply(lambda v: "/".join(v.split("/")[-2:]))
+        df["uid"] = df.doi_url.str.lstrip("http://doi.org")
 
         # The filename is composed of the title and uid columns with different
         # rules for collapsing punctuation and white space.
@@ -283,10 +283,8 @@ class Catalog:
 
         df["filename"] = (
             df["title"]
-            .apply(lambda v: v.translate(self.ttable))
-            .str.cat(
-                df.uid.apply(lambda v: v.translate(slash_and_dot_to_dash)), sep="-",
-            )
+            .str.translate(self.ttable)
+            .str.cat(df.uid.str.translate(slash_and_dot_to_dash), sep="-",)
         )
 
         self._dataframe = df.sort_values(by=["title", "author"], ascending=[True, True])
@@ -321,7 +319,7 @@ class Catalog:
         :return: None
         """
         # XXX update defaults with new url if one is given and it succeeds?
-        pandas.read_excel(url or self.url).dropna(axis=1).to_csv(self.cache_file)
+        pandas.read_excel(url or self.url).to_csv(self.cache_file)
 
     def textbooks(self, dataframe: pandas.DataFrame = None) -> tuple:
         """This generator function returns a namedtuple for each row in `dataframe`.
