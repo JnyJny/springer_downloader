@@ -416,8 +416,6 @@ def download_subcommand(
     dest-path/package_name/title.fmt
     ...
 
-
-
     See Also: `set-default-catalog`, `get-default-catalog`, `list`
     """
 
@@ -469,3 +467,10 @@ def download_subcommand(
         typer.secho("Permission error for: ", nl=False)
         typer.secho(str(error.filename), fg="red")
         raise typer.Exit(-1) from None
+
+
+@cli.command("version")
+def version_subcommand(ctx: typer.Context):
+    from .__version__ import __version__
+
+    typer.secho(f"{__version__}", fg="green")
