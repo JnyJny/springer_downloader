@@ -16,7 +16,7 @@ pandas = "^1.0.3"
 xlrd = "^1.2.0"
 requests = "^2.23.0"
 typer = "^0.1.1"
-loguru = "^0.4.1"
+loguru = ">=0.4.1,<0.6.0"
 toml = "^0.10.0"
 
 [tool.poetry.dev-dependencies]
